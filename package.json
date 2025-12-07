@@ -1,0 +1,17 @@
+{
+  "name": "talepick",
+  "version": "1.0.0",
+  "description": "TalePick",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
