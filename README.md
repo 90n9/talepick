@@ -72,6 +72,32 @@ npm run lint -w frontend
 npm run lint -w admin
 ```
 
+## Local MongoDB (Docker)
+
+Start a local Mongo instance for backend or integration testing:
+
+```bash
+docker compose up -d mongo
+```
+
+Stop it when finished:
+
+```bash
+docker compose down
+```
+
+The default credentials are `root` / `example` on `mongodb://localhost:27017`. Use `.env.local` per app to point to this URL when needed.
+
+## Testing
+
+- Frontend/Admin: Run lint to catch most issues before committing:
+  ```bash
+  npm run lint -w frontend
+  npm run lint -w admin
+  ```
+  Add component or integration tests (e.g., React Testing Library/Playwright) alongside features as they are introduced.
+- Backend: The backend service is not ported yet; when added, run its test script (e.g., `npm test -w <backend>`) with Mongo running via `docker compose up -d mongo`.
+
 ## Tech Stack
 
 - **Next.js 16** - React framework
@@ -79,4 +105,3 @@ npm run lint -w admin
 - **TypeScript 5** - Type safety
 - **Tailwind CSS 4** - Styling
 - **ESLint** - Code linting
-
