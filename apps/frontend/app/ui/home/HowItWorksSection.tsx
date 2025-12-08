@@ -18,7 +18,11 @@ const steps = [
   },
 ];
 
-export default function HowItWorksSection() {
+type HowItWorksSectionProps = {
+  scrollY: number;
+};
+
+export default function HowItWorksSection({ scrollY }: HowItWorksSectionProps) {
   return (
     <section className="relative py-32 border-t border-white/5 overflow-hidden">
       <div

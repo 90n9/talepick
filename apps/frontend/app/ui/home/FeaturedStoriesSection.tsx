@@ -7,10 +7,12 @@ import type { Story } from "@lib/types";
 
 type FeaturedStoriesSectionProps = {
   stories: Story[];
+  scrollY: number;
 };
 
 export default function FeaturedStoriesSection({
   stories,
+  scrollY,
 }: FeaturedStoriesSectionProps) {
   const router = useRouter();
 
