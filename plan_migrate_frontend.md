@@ -27,7 +27,7 @@ Goal: move the Vite React app in `mock/frontend` into the Next.js App Router app
 - [x] T16 Page logic Library: port logic; ensure pagination/filtering if present; lint/build.
 - [x] T17 Page logic StoryDetail: port logic, hook services, modals; ensure loading/error states; add interaction test; lint/build.
 - [x] T18 Page logic Player: port logic, media controls; add interaction test; lint/build.
-- [ ] T19 Auth pages batch: Login, Signup, ForgotPassword flows; connect to auth logic/context; add tests for success/error paths; lint/build.
+- [x] T19 Auth pages batch: Login, Signup, ForgotPassword flows; connect to auth logic/context; add tests for success/error paths; lint/build.
 - [ ] T20 Profile page: port profile view/edit; reuse EditProfileModal; test save/error; lint/build.
 - [ ] T21 Static/support pages: Support, PrivacyPolicy, TermsOfUse, Oracle content and metadata; lint/build.
 - [ ] T22 Auth/data wiring: centralize auth/user state (context or server actions), ensure hooks are client and services are shared; add unit/integration tests; lint/build.

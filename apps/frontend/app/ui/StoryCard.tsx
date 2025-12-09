@@ -68,7 +68,8 @@ export default function StoryCard({ story, onClick }: StoryCardProps) {
             <div className="w-full flex items-center justify-between text-primary font-medium">
               <span className="flex items-center gap-1">
                 <Calendar size={14} />
-                เปิดให้เล่น: {story.launchDate ?? "เร็วๆ นี้"}
+                <span>เปิดให้เล่น:</span>
+                <span>{story.launchDate ?? "เร็วๆ นี้"}</span>
               </span>
             </div>
           ) : (

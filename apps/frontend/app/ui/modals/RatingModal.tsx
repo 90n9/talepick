@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Star, X } from 'lucide-react';
 
@@ -20,15 +20,8 @@ export default function RatingModal({
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState('');
-  const [isClient, setIsClient] = useState(false);
 
-  useEffect(() => {
-    // Defer enablement to avoid SSR mismatch without cascading renders
-    const id = requestAnimationFrame(() => setIsClient(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-
-  if (!isOpen || !isClient) return null;
+  if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

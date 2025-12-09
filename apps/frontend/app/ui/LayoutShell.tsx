@@ -1,7 +1,9 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { APP_NAME, APP_VERSION, REFILL_INTERVAL_MS } from "@lib/constants";
 import {
   ChevronDown,
@@ -10,7 +12,6 @@ import {
   LogIn,
   LogOut,
   Menu,
-  Settings,
   UserIcon,
   X,
   Zap,
@@ -27,6 +28,7 @@ const navLinks = [
 ];
 
 export default function LayoutShell({ children }: LayoutShellProps) {
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
@@ -36,18 +38,23 @@ export default function LayoutShell({ children }: LayoutShellProps) {
   // TODO: find the current page value for set current navbar
   const currentPage = "";
 
+  const isAuthRoute = pathname?.startsWith("/auth");
+
   // TODO: check login status
   const isAuthenticated = false;
 
   // TODO: get user profile from database
-  const user = {
-    name: "GongIdeas",
-    avatar: undefined,
-    email: "contact@gongideas.com",
-    credits: 10,
-    maxCredits: 20,
-    lastRefillTime: Date.now(),
-  };
+  const user = useMemo(
+    () => ({
+      name: "GongIdeas",
+      avatar: undefined,
+      email: "contact@gongideas.com",
+      credits: 10,
+      maxCredits: 20,
+      lastRefillTime: Date.now(),
+    }),
+    [],
+  );
 
   useEffect(() => {
     const handler = () => setIsScrolled(window.scrollY > 20);
@@ -92,7 +99,21 @@ export default function LayoutShell({ children }: LayoutShellProps) {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [user?.credits, user?.lastRefillTime, user?.maxCredits]);
+  }, [user]);
+
+  useEffect(() => {
+    if (!pathname || isAuthRoute) return;
+    if (typeof window === "undefined") return;
+    sessionStorage.setItem("lastNonAuthPath", pathname);
+  }, [isAuthRoute, pathname]);
+
+  if (isAuthRoute) {
+    return (
+      <div className="min-h-screen bg-background text-white">
+        <main className="min-h-screen">{children}</main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col font-sans text-gray-100 bg-background overflow-x-hidden">
@@ -178,11 +199,14 @@ export default function LayoutShell({ children }: LayoutShellProps) {
                       onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                       className="flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full bg-surface/50 hover:bg-surface border border-white/5 hover:border-white/20 transition-all group backdrop-blur-sm cursor-pointer"
                     >
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-sm font-bold text-white shadow-md">
+                      <div className="relative w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-sm font-bold text-white shadow-md overflow-hidden">
                         {user.avatar ? (
-                          <img
+                          <Image
                             src={user.avatar}
-                            className="w-full h-full rounded-full object-cover"
+                            alt={user.name || "User avatar"}
+                            fill
+                            className="rounded-full object-cover"
+                            sizes="32px"
                           />
                         ) : (
                           user.name.charAt(0)
@@ -280,12 +304,15 @@ export default function LayoutShell({ children }: LayoutShellProps) {
                   </div>
                   <Link
                     href="/profile"
-                    className="w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-sm font-bold text-white cursor-pointer active:scale-95 transition-transform"
+                    className="relative w-8 h-8 rounded-full bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-sm font-bold text-white cursor-pointer active:scale-95 transition-transform overflow-hidden"
                   >
                     {user?.avatar ? (
-                      <img
+                      <Image
                         src={user.avatar}
-                        className="w-full h-full rounded-full object-cover"
+                        alt={user.name || "User avatar"}
+                        fill
+                        className="rounded-full object-cover"
+                        sizes="32px"
                       />
                     ) : (
                       user?.name.charAt(0)

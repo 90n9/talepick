@@ -69,8 +69,12 @@ export default function EditProfileModal({ isOpen, onClose, user, onSave }: Edit
 
         <div className="mt-6 space-y-4">
           <div>
-            <label className="mb-2 block text-sm font-medium text-neutral-700">ชื่อที่แสดง</label>
+            <label className="mb-2 block text-sm font-medium text-neutral-700" htmlFor="displayName">
+              ชื่อที่แสดง
+            </label>
             <input
+              id="displayName"
+              type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-900 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
@@ -117,6 +121,8 @@ export default function EditProfileModal({ isOpen, onClose, user, onSave }: Edit
               })}
             </div>
             <input
+              id="avatarUrl"
+              type="text"
               value={avatar}
               onChange={(e) => setAvatar(e.target.value)}
               placeholder="หรือวางลิงก์รูปภาพ"
