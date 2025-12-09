@@ -1,6 +1,6 @@
-# Frontend Migration Plan (legacy/frontend → apps/frontend)
+# Frontend Migration Plan (mock/frontend → apps/frontend)
 
-Goal: move the Vite React app in `legacy/frontend` into the Next.js App Router app in `apps/frontend`, keeping functionality while ensuring `npm run lint -w frontend`, `npm run build -w frontend`, and new tests pass at every stage.
+Goal: move the Vite React app in `mock/frontend` into the Next.js App Router app in `apps/frontend`, keeping design, layout, copy and functionality while ensuring `npm run lint -w frontend`, `npm run build -w frontend`, and new tests pass at every stage.
 
 ## Working notes
 - Commands: run from repo root; use workspace flags (`-w frontend`).
@@ -10,7 +10,7 @@ Goal: move the Vite React app in `legacy/frontend` into the Next.js App Router a
 
 ## Tasks
 - [x] T01 Baseline: install deps if needed (`npm install`), confirm `npm run lint -w frontend` and `npm run build -w frontend` (webpack flag needed here).
-- [x] T02 Inventory legacy app: list routes, components, services, constants, types, env needs from `legacy/frontend` (pages/components/services/constants/types/metadata/env keys).
+- [x] T02 Inventory mock app: list routes, components, services, constants, types, env needs from `mock/frontend` (pages/components/services/constants/types/metadata/env keys).
 - [x] T03 Decide Next folder map: define `app/lib` (constants/types/services), `app/ui` (shared UI), route segments; note any files to split to keep <200 lines.
 - [x] T04 Align TS/eslint config: add path aliases in `apps/frontend/tsconfig.json`, confirm eslint covers `app/lib` and `app/ui`, rerun lint.
 - [x] T05 Copy constants/types: migrate `constants.ts` → `app/lib/constants.ts`, `types.ts` → `app/lib/types.ts`; ensure exports are modular; lint.
@@ -23,10 +23,10 @@ Goal: move the Vite React app in `legacy/frontend` into the Next.js App Router a
 - [x] T12 UI component StoryCard: migrate to `app/ui/StoryCard.tsx` (split helper subcomponents if >200 lines); add unit test; lint/test.
 - [x] T13 UI components modals batch 1: RatingModal → `app/ui/modals/RatingModal.tsx` (split logic/hooks if needed); add test for open/submit paths; lint/test.
 - [x] T14 UI components modals batch 2: ReportModal, EditProfileModal in `app/ui/modals/*` (split form pieces if needed); add smoke tests; lint/test.
-- [x] T15 Page logic Home: replace placeholder with legacy content; ensure data/hooks client/server boundaries; lint/build.
-- [ ] T16 Page logic Library: port logic; ensure pagination/filtering if present; lint/build.
-- [ ] T17 Page logic StoryDetail: port logic, hook services, modals; ensure loading/error states; add interaction test; lint/build.
-- [ ] T18 Page logic Player: port logic, media controls; add interaction test; lint/build.
+- [x] T15 Page logic Home: replace placeholder with mock content; ensure data/hooks client/server boundaries; lint/build.
+- [x] T16 Page logic Library: port logic; ensure pagination/filtering if present; lint/build.
+- [x] T17 Page logic StoryDetail: port logic, hook services, modals; ensure loading/error states; add interaction test; lint/build.
+- [x] T18 Page logic Player: port logic, media controls; add interaction test; lint/build.
 - [ ] T19 Auth pages batch: Login, Signup, ForgotPassword flows; connect to auth logic/context; add tests for success/error paths; lint/build.
 - [ ] T20 Profile page: port profile view/edit; reuse EditProfileModal; test save/error; lint/build.
 - [ ] T21 Static/support pages: Support, PrivacyPolicy, TermsOfUse, Oracle content and metadata; lint/build.
@@ -45,4 +45,4 @@ Goal: move the Vite React app in `legacy/frontend` into the Next.js App Router a
   - `app/ui`: shared UI; modals in `app/ui/modals`; extract subcomponents to stay under 200 lines.
   - Routes: `app/(routes)/home`, `stories`, `stories/[id]`, `play/[id]`, `auth/login`, `auth/signup`, `auth/forgot-password`, `profile`, `support`, `privacy-policy`, `terms-of-use`, `oracle`.
   - Layouts: global shell in `app/layout.tsx` + `app/ui/LayoutShell`; auth layout in `app/ui/AuthLayout`.
-- Current homepage mirrors legacy Home: dark parallax hero with video/image overlay, Thai copy/CTAs, featured stories grid, how-to-play steps, reviews slider, and support CTA using legacy fonts (Kanit/Inter, Noto Serif Thai/Cinzel).
+- Current homepage mirrors mock Home: dark parallax hero with video/image overlay, Thai copy/CTAs, featured stories grid, how-to-play steps, reviews slider, and support CTA using mock fonts (Kanit/Inter, Noto Serif Thai/Cinzel).

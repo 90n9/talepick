@@ -3,7 +3,7 @@
 ## Project Structure & Module Organization
 - Root `package.json` uses npm workspaces; active apps live under `apps/*`.
 - `apps/frontend` and `apps/admin` are Next.js 16 App Router apps (ports 3000/3001). Layout and routes live in `app/`, shared styles in `app/globals.css`, static assets in `public/`.
-- `legacy/*` holds mock React versions; reference only while migrating features into the Next.js apps.
+- `mock/*` holds mock React versions; reference while migrating features, design, layout, and copy into the Next.js apps.
 
 ## Architecture & Shared Logic
 - Monorepo is for the web game; frontend and admin should share business logic and Mongo-backed models.
