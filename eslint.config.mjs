@@ -16,6 +16,8 @@ const eslintConfig = [
     '*.md',
     // Ignore apps as they have their own configs
     'apps/**',
+    // Ignore mock directory
+    'mock/**',
   ]),
 ];
 
