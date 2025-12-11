@@ -1,12 +1,12 @@
 'use client';
 
+import { useAuth } from '@lib/auth-context';
+import { APP_NAME, APP_VERSION, REFILL_INTERVAL_MS } from '@lib/constants';
+import { ChevronDown, Edit3, Heart, LogIn, LogOut, Menu, UserIcon, X, Zap } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { APP_NAME, APP_VERSION, REFILL_INTERVAL_MS } from '@lib/constants';
-import { useAuth } from '@lib/auth-context';
-import { ChevronDown, Edit3, Heart, LogIn, LogOut, Menu, UserIcon, X, Zap } from 'lucide-react';
 
 type LayoutShellProps = {
   children: ReactNode;
@@ -242,11 +242,11 @@ export default function LayoutShell({ children }: LayoutShellProps) {
                   <div className='flex items-center gap-1 px-2 py-1 rounded-full bg-black/40 border border-white/5'>
                     <Zap
                       size={14}
-                      className={`${user && user.credits > 0 ? 'text-accent' : 'text-red-500'}`}
+                      className={`${user.credits > 0 ? 'text-accent' : 'text-red-500'}`}
                       fill='currentColor'
                     />
                     <span className='text-xs font-bold font-mono text-white'>{user?.credits}</span>
-                    {user && user.credits < user.maxCredits && (
+                    {user.credits < user.maxCredits && (
                       <span className='text-[9px] text-gray-400 font-mono ml-1 border-l border-white/10 pl-1'>
                         {nextRefill}
                       </span>
