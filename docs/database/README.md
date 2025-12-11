@@ -85,26 +85,26 @@ graph TB
 ## 🗂️ Collection Categories
 
 ### User Management (5 collections)
-- [Users](./collections/users.md) - Core user data with multi-auth support
-- [UserAchievements](./collections/user-achievements.md) - Achievement tracking
-- [UserAvatars](./collections/user-avatars.md) - Avatar ownership & usage
-- [UserFavorites](./collections/user-favorites.md) - Story favorites
-- [UserStoryProgress](./collections/user-story-progress.md) - Game progress tracking
+- [Users](./collections/USERS.md) - Core user data with multi-auth support
+- [UserAchievements](./collections/USER_ACHIEVEMENTS.md) - Achievement tracking
+- [UserAvatars](./collections/USER_AVATARS.md) - Avatar ownership & usage
+- [UserFavorites](./collections/USER_FAVORITES.md) - Story favorites
+- [UserStoryProgress](./collections/USER_STORY_PROGRESS.md) - Game progress tracking
 
 ### Content System (5 collections)
-- [Stories](./collections/stories.md) - Story metadata & moderation
-- [StoryNodes](./collections/story-nodes.md) - Story content & branching
-- [StoryAssets](./collections/story-assets.md) - Media file management
-- [StoryGallery](./collections/story-gallery.md) - Story image galleries
-- [Genres](./collections/genres.md) - Story categories
+- [Stories](./collections/STORIES.md) - Story metadata & moderation
+- [StoryNodes](./collections/STORY_NODES.md) - Story content & branching
+- [StoryAssets](./collections/STORY_ASSETS.md) - Media file management
+- [StoryGallery](./collections/STORY_GALLERY.md) - Story image galleries
+- [Genres](./collections/GENRES.md) - Story categories
 
 ### Game Mechanics (3 collections)
-- [Achievements](./collections/achievements.md) - Achievement definitions
-- [Avatars](./collections/avatars.md) - Avatar definitions & unlocks
-- [CreditTransactions](./collections/credit-transactions.md) - Credit economy
+- [Achievements](./collections/ACHIEVEMENTS.md) - Achievement definitions
+- [Avatars](./collections/AVATARS.md) - Avatar definitions & unlocks
+- [CreditTransactions](./collections/CREDIT_TRANSACTIONS.md) - Credit economy
 
 ### Community & Moderation (4 collections)
-- [Reviews](./collections/reviews.md) - User reviews & ratings
+- [Reviews](./collections/REVIEWS.md) - User reviews & ratings
 - [ReviewVotes](./collections/review-votes.md) - Review voting system
 - [ReviewFlags](./collections/review-flags.md) - Review reporting
 - [StoryFlags](./collections/story-flags.md) - Story content reporting
