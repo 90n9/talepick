@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout';
@@ -38,27 +37,37 @@ const App: React.FC = () => {
     <ToastProvider>
       <Router>
         <Routes>
-          <Route path="/login" element={
-            isAuthenticated ? <Navigate to="/" replace /> : <Login onLogin={handleLogin} />
-          } />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          
-          <Route path="/" element={
-            isAuthenticated ? <Layout onLogout={handleLogout} /> : <Navigate to="/login" replace />
-          }>
+          <Route
+            path='/login'
+            element={
+              isAuthenticated ? <Navigate to='/' replace /> : <Login onLogin={handleLogin} />
+            }
+          />
+          <Route path='/forgot-password' element={<ForgotPassword />} />
+
+          <Route
+            path='/'
+            element={
+              isAuthenticated ? (
+                <Layout onLogout={handleLogout} />
+              ) : (
+                <Navigate to='/login' replace />
+              )
+            }
+          >
             <Route index element={<Dashboard />} />
-            <Route path="users" element={<UsersPage />} />
-            <Route path="stories" element={<StoriesPage />} />
-            <Route path="stories/editor" element={<StoryEditor />} />
-            <Route path="genres" element={<GenresPage />} />
-            <Route path="reviews" element={<ReviewsPage />} />
-            <Route path="reports" element={<ReportModerationPage />} />
-            <Route path="content-tools" element={<ContentToolsPage />} />
-            <Route path="achievements" element={<AchievementsPage />} />
-            <Route path="analytics" element={<AnalyticsPage />} />
-            <Route path="team" element={<AdminTeamPage />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="settings" element={<SettingsPage />} />
+            <Route path='users' element={<UsersPage />} />
+            <Route path='stories' element={<StoriesPage />} />
+            <Route path='stories/editor' element={<StoryEditor />} />
+            <Route path='genres' element={<GenresPage />} />
+            <Route path='reviews' element={<ReviewsPage />} />
+            <Route path='reports' element={<ReportModerationPage />} />
+            <Route path='content-tools' element={<ContentToolsPage />} />
+            <Route path='achievements' element={<AchievementsPage />} />
+            <Route path='analytics' element={<AnalyticsPage />} />
+            <Route path='team' element={<AdminTeamPage />} />
+            <Route path='profile' element={<ProfilePage />} />
+            <Route path='settings' element={<SettingsPage />} />
           </Route>
         </Routes>
       </Router>

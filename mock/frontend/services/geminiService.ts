@@ -1,5 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
-import { Story } from "../types";
+import { GoogleGenAI } from '@google/genai';
+import { Story } from '../types';
 
 // This service is used to "Consult the Oracle" - an AI feature to recommend stories or give hints.
 
@@ -9,14 +9,16 @@ export const getGeminiRecommendation = async (mood: string, stories: Story[]): P
     const apiKey = typeof process !== 'undefined' ? process.env.API_KEY : undefined;
 
     if (!apiKey) {
-      console.warn("API Key missing for Gemini.");
+      console.warn('API Key missing for Gemini.');
       return "เทพพยากรณ์เงียบงันในขณะนี้ (ไม่พบ API Key) ลองเล่น 'The Neon Protocol' ดูสิ";
     }
 
     // Initialize only if key is present to avoid Illegal constructor errors
     const ai = new GoogleGenAI({ apiKey });
-    
-    const storyContext = stories.map(s => `- ${s.title} (${s.genre}): ${s.description}`).join('\n');
+
+    const storyContext = stories
+      .map((s) => `- ${s.title} (${s.genre}): ${s.description}`)
+      .join('\n');
 
     const prompt = `
       คุณคือ "เทพพยากรณ์แห่ง Chronos" ผู้นำทางลึกลับสำหรับแพลตฟอร์มเกมนิยาย
@@ -34,9 +36,9 @@ export const getGeminiRecommendation = async (mood: string, stories: Story[]): P
       contents: prompt,
     });
 
-    return response.text || "หมอกควันบดบังนิมิตของข้า... จงลองใหม่อีกครั้ง";
+    return response.text || 'หมอกควันบดบังนิมิตของข้า... จงลองใหม่อีกครั้ง';
   } catch (error) {
-    console.error("Gemini Error:", error);
-    return "การเชื่อมต่อกับเทพพยากรณ์ขาดหาย กรุณาลองใหม่ภายหลัง";
+    console.error('Gemini Error:', error);
+    return 'การเชื่อมต่อกับเทพพยากรณ์ขาดหาย กรุณาลองใหม่ภายหลัง';
   }
 };

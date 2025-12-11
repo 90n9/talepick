@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
@@ -131,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(createUser({ name: pendingSignup.name, email: pendingSignup.email }));
       setPendingSignup(null);
     },
-    [pendingSignup],
+    [pendingSignup]
   );
 
   const requestPasswordReset = useCallback(async (email: string) => {
@@ -154,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setResetOtpVerified(true);
     },
-    [resetEmail],
+    [resetEmail]
   );
 
   const updatePassword = useCallback(
@@ -172,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setResetEmail(null);
       setResetOtpVerified(false);
     },
-    [resetEmail, resetOtpVerified],
+    [resetEmail, resetOtpVerified]
   );
 
   const updateUser = useCallback((updates: Partial<User>) => {
@@ -215,27 +215,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const addRatingBonus = useCallback(
-    (storyId: string) => {
-      let applied = false;
-      setUser((previous) => {
-        if (!previous) return previous;
-        if (previous.ratedStoriesForBonus.includes(storyId)) return previous;
+  const addRatingBonus = useCallback((storyId: string) => {
+    let applied = false;
+    setUser((previous) => {
+      if (!previous) return previous;
+      if (previous.ratedStoriesForBonus.includes(storyId)) return previous;
 
-        const nextRated = [...previous.ratedStoriesForBonus, storyId];
-        const achievements = previous.achievements.includes('critic')
-          ? previous.achievements
-          : [...previous.achievements, 'critic'];
-        const maxCredits = calculateMaxCredits(achievements, previous.isGuest);
-        const credits = Math.min(previous.credits + 5, maxCredits);
+      const nextRated = [...previous.ratedStoriesForBonus, storyId];
+      const achievements = previous.achievements.includes('critic')
+        ? previous.achievements
+        : [...previous.achievements, 'critic'];
+      const maxCredits = calculateMaxCredits(achievements, previous.isGuest);
+      const credits = Math.min(previous.credits + 5, maxCredits);
 
-        applied = true;
-        return { ...previous, ratedStoriesForBonus: nextRated, achievements, maxCredits, credits };
-      });
-      return applied;
-    },
-    [],
-  );
+      applied = true;
+      return { ...previous, ratedStoriesForBonus: nextRated, achievements, maxCredits, credits };
+    });
+    return applied;
+  }, []);
 
   const spendCredit = useCallback(() => {
     let success = false;
@@ -246,7 +243,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return {
         ...previous,
         credits: previous.credits - 1,
-        lastRefillTime: previous.credits === previous.maxCredits ? Date.now() : previous.lastRefillTime,
+        lastRefillTime:
+          previous.credits === previous.maxCredits ? Date.now() : previous.lastRefillTime,
       };
     });
     return success;
@@ -317,7 +315,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       verifyResetOtp,
       verifySignupOtp,
-    ],
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

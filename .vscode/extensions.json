@@ -1,0 +1,24 @@
+{
+  "recommendations": [
+    // Essential extensions
+    "esbenp.prettier-vscode",
+    "dbaeumer.vscode-eslint",
+
+    // TypeScript/React support
+    "bradlc.vscode-tailwindcss",
+    "ms-vscode.vscode-typescript-next",
+
+    // Optional but useful
+    "ms-vscode.vscode-json",
+    "redhat.vscode-yaml",
+    "streetsidesoftware.code-spell-checker",
+    "formulahendry.auto-rename-tag",
+    "christian-kohler.path-intellisense",
+
+    // Testing
+    "vitest.explorer",
+
+    // Git
+    "eamodio.gitlens"
+  ]
+}

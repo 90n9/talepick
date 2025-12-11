@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
         router.push('/');
       }
     },
-    [router],
+    [router]
   );
 
   useEffect(() => {
@@ -120,7 +120,13 @@ export default function ForgotPasswordPage() {
       onClose={handleClose}
     >
       {step === 'EMAIL' && (
-        <EmailStep email={email} isLoading={isLoading} error={error} onChange={setEmail} onSubmit={handleSendOtp} />
+        <EmailStep
+          email={email}
+          isLoading={isLoading}
+          error={error}
+          onChange={setEmail}
+          onSubmit={handleSendOtp}
+        />
       )}
 
       {step === 'OTP' && (
@@ -161,8 +167,8 @@ export default function ForgotPasswordPage() {
 
       {step === 'EMAIL' && (
         <Link
-          href="/auth/login"
-          className="mt-6 flex items-center justify-center gap-2 text-sm text-gray-400 hover:text-white transition-colors hover:underline decoration-white/20 underline-offset-4 animate-slide-up-fade"
+          href='/auth/login'
+          className='mt-6 flex items-center justify-center gap-2 text-sm text-gray-400 hover:text-white transition-colors hover:underline decoration-white/20 underline-offset-4 animate-slide-up-fade'
         >
           <ArrowLeft size={16} />
           <span>กลับไปเข้าสู่ระบบ</span>

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -17,7 +17,12 @@ export default function SignupPage() {
   const router = useRouter();
 
   const [step, setStep] = useState<Step>('REGISTER');
-  const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [otp, setOtp] = useState('');
   const [timer, setTimer] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +36,7 @@ export default function SignupPage() {
         router.push('/');
       }
     },
-    [router],
+    [router]
   );
 
   useEffect(() => {
@@ -56,7 +61,11 @@ export default function SignupPage() {
     setMessage(null);
     setError(null);
     try {
-      await startSignup({ name: formData.name.trim(), email: formData.email.trim(), password: formData.password });
+      await startSignup({
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+      });
       setStep('OTP');
       setTimer(60);
       setMessage(`ส่งรหัสยืนยันไปยัง ${formData.email}`);
@@ -106,7 +115,13 @@ export default function SignupPage() {
 
   return (
     <AuthLayout
-      title={step === 'REGISTER' ? 'สร้างบัญชีผู้ใช้' : step === 'OTP' ? 'ยืนยันอีเมล' : 'พร้อมออกเดินทาง'}
+      title={
+        step === 'REGISTER'
+          ? 'สร้างบัญชีผู้ใช้'
+          : step === 'OTP'
+            ? 'ยืนยันอีเมล'
+            : 'พร้อมออกเดินทาง'
+      }
       subtitle={
         step === 'REGISTER'
           ? 'เริ่มต้นการเดินทางของคุณวันนี้'
@@ -129,9 +144,12 @@ export default function SignupPage() {
             onGoogleSignup={handleGoogleSignup}
             onGuestSignup={loginAsGuest}
           />
-          <div className="mt-8 text-center text-sm text-gray-400 animate-slide-up-fade delay-700 fill-mode-forwards opacity-0">
+          <div className='mt-8 text-center text-sm text-gray-400 animate-slide-up-fade delay-700 fill-mode-forwards opacity-0'>
             มีบัญชีอยู่แล้ว?{' '}
-            <Link href="/auth/login" className="text-primary hover:text-blue-400 font-semibold transition-colors hover:underline decoration-blue-500/30 underline-offset-4">
+            <Link
+              href='/auth/login'
+              className='text-primary hover:text-blue-400 font-semibold transition-colors hover:underline decoration-blue-500/30 underline-offset-4'
+            >
               เข้าสู่ระบบ
             </Link>
           </div>

@@ -1,13 +1,12 @@
-
 export enum UserType {
   GUEST = 'ผู้เยี่ยมชม',
   REGISTERED = 'สมาชิก',
-  ADMIN = 'ผู้ดูแลระบบ'
+  ADMIN = 'ผู้ดูแลระบบ',
 }
 
 export enum UserStatus {
   ACTIVE = 'ปกติ',
-  BANNED = 'ถูกระงับ'
+  BANNED = 'ถูกระงับ',
 }
 
 export type LoginProvider = 'email' | 'google' | 'guest';
@@ -41,7 +40,11 @@ export interface UserRating {
   createdAt: string;
 }
 
-export type AvatarUnlockCondition = 'any_ending' | 'specific_ending' | 'all_endings' | 'complete_100';
+export type AvatarUnlockCondition =
+  | 'any_ending'
+  | 'specific_ending'
+  | 'all_endings'
+  | 'complete_100';
 
 export interface AvatarReward {
   id: string;
@@ -68,7 +71,7 @@ export interface User {
   isDonator: boolean;
   lastActive: string;
   avatar: string;
-  
+
   // Detailed data
   activityLogs: ActivityLog[];
   storyProgress: UserStoryProgress[];
@@ -80,7 +83,7 @@ export interface User {
 export enum StoryStatus {
   DRAFT = 'แบบร่าง',
   PUBLISHED = 'เผยแพร่แล้ว',
-  ARCHIVED = 'จัดเก็บ'
+  ARCHIVED = 'จัดเก็บ',
 }
 
 export type GalleryItemType = 'image' | 'video';
@@ -122,7 +125,7 @@ export interface Story {
   launchDate?: string;
 
   // Rewards
-  avatarRewards?: AvatarReward[]; 
+  avatarRewards?: AvatarReward[];
 
   // Internal Game Assets (New Field)
   assets?: Asset[];
@@ -161,7 +164,7 @@ export interface StoryReview {
 export enum ReportStatus {
   PENDING = 'รอดำเนินการ',
   RESOLVED = 'แก้ไขแล้ว',
-  DISMISSED = 'ยกเลิก/ไม่พบปัญหา'
+  DISMISSED = 'ยกเลิก/ไม่พบปัญหา',
 }
 
 export type ReportTargetType = 'story' | 'review';
@@ -171,7 +174,7 @@ export interface StoryReport {
   targetType: ReportTargetType; // Is this reporting the story or a specific review?
   storyId: string;
   storyTitle: string;
-  
+
   // If targetType is 'review'
   reviewId?: string;
   reviewContent?: string;
@@ -212,7 +215,7 @@ export interface Scene {
   endingDescription?: string;
   x?: number; // For graph layout
   y?: number; // For graph layout
-  
+
   // Editor helper properties
   validationIssues?: string[];
   needsRevision?: boolean;
@@ -229,14 +232,14 @@ export interface StatMetric {
 
 export enum AchievementType {
   AUTO = 'อัตโนมัติ',
-  MANUAL = 'กำหนดเอง'
+  MANUAL = 'กำหนดเอง',
 }
 
 export enum AchievementTriggerType {
   PLAY_COUNT = 'จำนวนการเล่น',
   ENDING_COUNT = 'เก็บฉากจบ',
   STORY_COMPLETE = 'เล่นจบ 100%',
-  RATING_COUNT = 'จำนวนการรีวิว'
+  RATING_COUNT = 'จำนวนการรีวิว',
 }
 
 export interface Achievement {
@@ -246,7 +249,7 @@ export interface Achievement {
   type: AchievementType;
   icon: string; // Icon identifier (e.g. 'trophy', 'star')
   isActive: boolean;
-  
+
   // Logic for Auto
   triggerType?: AchievementTriggerType;
   threshold?: number; // e.g., 5 games
@@ -280,7 +283,7 @@ export enum AdminRole {
   STORY_EDITOR = 'Story Editor',
   USER_MANAGER = 'User Manager',
   ACHIEVEMENT_MANAGER = 'Achievement Manager',
-  VIEWER = 'Viewer Only'
+  VIEWER = 'Viewer Only',
 }
 
 export interface AdminAccount {

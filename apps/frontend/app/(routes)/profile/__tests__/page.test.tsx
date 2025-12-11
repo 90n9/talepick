@@ -35,7 +35,9 @@ describe('ProfilePage', () => {
 
     fireEvent.click(screen.getAllByText('แก้ไขโปรไฟล์')[0]);
 
-    await waitFor(() => expect(screen.getByRole('heading', { name: 'แก้ไขโปรไฟล์' })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'แก้ไขโปรไฟล์' })).toBeInTheDocument()
+    );
 
     fireEvent.change(screen.getByLabelText('ชื่อที่แสดง'), { target: { value: 'นักเดินทาง' } });
     fireEvent.change(screen.getByPlaceholderText('หรือวางลิงก์รูปภาพ'), {
@@ -55,7 +57,7 @@ describe('ProfilePage', () => {
 
     fireEvent.click(screen.getByText('ประวัติการเล่น'));
     await waitFor(() =>
-      expect(screen.getByText('ประวัติการเล่นจะถูกบันทึกสำหรับสมาชิกเท่านั้น')).toBeInTheDocument(),
+      expect(screen.getByText('ประวัติการเล่นจะถูกบันทึกสำหรับสมาชิกเท่านั้น')).toBeInTheDocument()
     );
 
     fireEvent.click(screen.getByText('ลงทะเบียนเลย'));

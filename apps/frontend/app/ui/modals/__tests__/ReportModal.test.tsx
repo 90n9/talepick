@@ -11,9 +11,9 @@ describe('ReportModal', () => {
         isOpen
         onClose={onClose}
         onSubmit={onSubmit}
-        title="Test Story"
-        targetType="story"
-      />,
+        title='Test Story'
+        targetType='story'
+      />
     );
 
     fireEvent.click(screen.getByLabelText(/เนื้อหาไม่เหมาะสม/));

@@ -22,9 +22,7 @@ describe('EditProfileModal', () => {
     const onSave = vi.fn();
     const onClose = vi.fn();
 
-    render(
-      <EditProfileModal isOpen onClose={onClose} onSave={onSave} user={user} />,
-    );
+    render(<EditProfileModal isOpen onClose={onClose} onSave={onSave} user={user} />);
 
     fireEvent.change(screen.getByLabelText('ชื่อที่แสดง'), {
       target: { value: 'Bob' },

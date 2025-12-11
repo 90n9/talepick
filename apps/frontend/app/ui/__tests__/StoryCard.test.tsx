@@ -32,7 +32,7 @@ describe('StoryCard', () => {
           comingSoon: true,
           launchDate: '2025-01-01',
         }}
-      />,
+      />
     );
 
     expect(screen.getByText(/เร็วๆ นี้/)).toBeInTheDocument();

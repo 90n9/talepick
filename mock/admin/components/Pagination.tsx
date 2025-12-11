@@ -8,9 +8,14 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
 }
 
-export const Pagination: React.FC<PaginationProps> = ({ currentPage, totalItems, itemsPerPage, onPageChange }) => {
+export const Pagination: React.FC<PaginationProps> = ({
+  currentPage,
+  totalItems,
+  itemsPerPage,
+  onPageChange,
+}) => {
   const totalPages = Math.ceil(totalItems / itemsPerPage);
-  
+
   if (totalPages <= 1) return null;
 
   const startItem = (currentPage - 1) * itemsPerPage + 1;
@@ -24,7 +29,15 @@ export const Pagination: React.FC<PaginationProps> = ({ currentPage, totalItems,
       if (currentPage <= 4) {
         pages.push(1, 2, 3, 4, 5, '...', totalPages);
       } else if (currentPage >= totalPages - 3) {
-        pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+        pages.push(
+          1,
+          '...',
+          totalPages - 4,
+          totalPages - 3,
+          totalPages - 2,
+          totalPages - 1,
+          totalPages
+        );
       } else {
         pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
       }
@@ -33,11 +46,13 @@ export const Pagination: React.FC<PaginationProps> = ({ currentPage, totalItems,
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-white border-t border-gray-200 mt-auto gap-4 sm:gap-0">
-      <div className="text-sm text-gray-700 order-2 sm:order-1">
-        แสดง <span className="font-medium">{startItem}</span> ถึง <span className="font-medium">{endItem}</span> จาก <span className="font-medium">{totalItems}</span> รายการ
+    <div className='flex flex-col sm:flex-row items-center justify-between px-4 py-3 bg-white border-t border-gray-200 mt-auto gap-4 sm:gap-0'>
+      <div className='text-sm text-gray-700 order-2 sm:order-1'>
+        แสดง <span className='font-medium'>{startItem}</span> ถึง{' '}
+        <span className='font-medium'>{endItem}</span> จาก{' '}
+        <span className='font-medium'>{totalItems}</span> รายการ
       </div>
-      <div className="flex items-center space-x-1 order-1 sm:order-2">
+      <div className='flex items-center space-x-1 order-1 sm:order-2'>
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
@@ -45,9 +60,9 @@ export const Pagination: React.FC<PaginationProps> = ({ currentPage, totalItems,
         >
           <ChevronLeft size={16} />
         </button>
-        <div className="hidden sm:flex space-x-1">
-          {getPageNumbers().map((page, index) => (
-             typeof page === 'number' ? (
+        <div className='hidden sm:flex space-x-1'>
+          {getPageNumbers().map((page, index) =>
+            typeof page === 'number' ? (
               <button
                 key={index}
                 onClick={() => onPageChange(page)}
@@ -59,10 +74,12 @@ export const Pagination: React.FC<PaginationProps> = ({ currentPage, totalItems,
               >
                 {page}
               </button>
-             ) : (
-               <span key={index} className="px-2 py-1 text-gray-400">...</span>
-             )
-          ))}
+            ) : (
+              <span key={index} className='px-2 py-1 text-gray-400'>
+                ...
+              </span>
+            )
+          )}
         </div>
         <button
           onClick={() => onPageChange(currentPage + 1)}

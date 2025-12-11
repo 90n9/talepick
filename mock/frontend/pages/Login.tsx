@@ -25,95 +25,103 @@ export const Login: React.FC<LoginProps> = ({ onNavigate, onBack }) => {
   };
 
   return (
-    <AuthLayout 
-      title="ยินดีต้อนรับกลับมา" 
-      subtitle="เข้าสู่ระบบเพื่อสานต่อการผจญภัยของคุณ"
+    <AuthLayout
+      title='ยินดีต้อนรับกลับมา'
+      subtitle='เข้าสู่ระบบเพื่อสานต่อการผจญภัยของคุณ'
       onClose={onBack}
     >
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-4">
-          <div className="relative group animate-slide-up-fade delay-100 fill-mode-forwards opacity-0">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 transition-all duration-300 group-focus-within:text-primary group-focus-within:scale-110 group-focus-within:drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" size={18} />
-            <input 
-              type="email" 
+      <form onSubmit={handleSubmit} className='space-y-5'>
+        <div className='space-y-4'>
+          <div className='relative group animate-slide-up-fade delay-100 fill-mode-forwards opacity-0'>
+            <Mail
+              className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 transition-all duration-300 group-focus-within:text-primary group-focus-within:scale-110 group-focus-within:drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]'
+              size={18}
+            />
+            <input
+              type='email'
               required
-              placeholder="อีเมล" 
+              placeholder='อีเมล'
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-sm text-white transition-all duration-300 focus:outline-none focus:border-primary focus:bg-black/60 focus:shadow-[0_0_20px_rgba(59,130,246,0.3)] placeholder:text-gray-600"
+              className='w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-sm text-white transition-all duration-300 focus:outline-none focus:border-primary focus:bg-black/60 focus:shadow-[0_0_20px_rgba(59,130,246,0.3)] placeholder:text-gray-600'
             />
           </div>
-          
-          <div className="relative group animate-slide-up-fade delay-200 fill-mode-forwards opacity-0">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 transition-all duration-300 group-focus-within:text-primary group-focus-within:scale-110 group-focus-within:drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]" size={18} />
-            <input 
-              type="password" 
+
+          <div className='relative group animate-slide-up-fade delay-200 fill-mode-forwards opacity-0'>
+            <Lock
+              className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 transition-all duration-300 group-focus-within:text-primary group-focus-within:scale-110 group-focus-within:drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]'
+              size={18}
+            />
+            <input
+              type='password'
               required
-              placeholder="รหัสผ่าน" 
+              placeholder='รหัสผ่าน'
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-sm text-white transition-all duration-300 focus:outline-none focus:border-primary focus:bg-black/60 focus:shadow-[0_0_20px_rgba(59,130,246,0.3)] placeholder:text-gray-600"
+              className='w-full bg-black/40 border border-white/10 rounded-lg pl-10 pr-4 py-3 text-sm text-white transition-all duration-300 focus:outline-none focus:border-primary focus:bg-black/60 focus:shadow-[0_0_20px_rgba(59,130,246,0.3)] placeholder:text-gray-600'
             />
           </div>
         </div>
 
-        <div className="flex justify-end animate-slide-up-fade delay-300 fill-mode-forwards opacity-0">
-          <button 
-            type="button"
+        <div className='flex justify-end animate-slide-up-fade delay-300 fill-mode-forwards opacity-0'>
+          <button
+            type='button'
             onClick={() => onNavigate('forgot-password')}
-            className="text-xs text-primary hover:text-blue-400 transition-colors hover:underline decoration-blue-500/30 underline-offset-4"
+            className='text-xs text-primary hover:text-blue-400 transition-colors hover:underline decoration-blue-500/30 underline-offset-4'
           >
             ลืมรหัสผ่าน?
           </button>
         </div>
 
-        <button 
-          type="submit"
+        <button
+          type='submit'
           disabled={isLoading}
-          className="w-full bg-primary hover:bg-blue-600 active:scale-95 text-white font-bold py-3 rounded-lg transition-all duration-200 shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed animate-slide-up-fade delay-300 fill-mode-forwards opacity-0"
+          className='w-full bg-primary hover:bg-blue-600 active:scale-95 text-white font-bold py-3 rounded-lg transition-all duration-200 shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed animate-slide-up-fade delay-300 fill-mode-forwards opacity-0'
         >
           {isLoading ? (
-            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <div className='w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin' />
           ) : (
             <>
               <span>เข้าสู่ระบบ</span>
-              <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              <ArrowRight size={18} className='group-hover:translate-x-1 transition-transform' />
             </>
           )}
         </button>
 
-        <div className="relative flex py-2 items-center animate-slide-up-fade delay-500 fill-mode-forwards opacity-0">
-            <div className="flex-grow border-t border-white/10"></div>
-            <span className="flex-shrink-0 mx-4 text-xs text-gray-500 uppercase tracking-widest">หรือ</span>
-            <div className="flex-grow border-t border-white/10"></div>
+        <div className='relative flex py-2 items-center animate-slide-up-fade delay-500 fill-mode-forwards opacity-0'>
+          <div className='flex-grow border-t border-white/10'></div>
+          <span className='flex-shrink-0 mx-4 text-xs text-gray-500 uppercase tracking-widest'>
+            หรือ
+          </span>
+          <div className='flex-grow border-t border-white/10'></div>
         </div>
 
-        <div className="space-y-3 animate-slide-up-fade delay-500 fill-mode-forwards opacity-0">
-            <button 
-                type="button"
-                onClick={() => login()} // Mock Google Login
-                className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium py-3 rounded-lg transition-all active:scale-95 flex items-center justify-center gap-2 group hover:border-white/30"
-            >
-                <Chrome size={18} className="text-gray-400 group-hover:text-white transition-colors" />
-                <span>เข้าสู่ระบบด้วย Google</span>
-            </button>
+        <div className='space-y-3 animate-slide-up-fade delay-500 fill-mode-forwards opacity-0'>
+          <button
+            type='button'
+            onClick={() => login()} // Mock Google Login
+            className='w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white font-medium py-3 rounded-lg transition-all active:scale-95 flex items-center justify-center gap-2 group hover:border-white/30'
+          >
+            <Chrome size={18} className='text-gray-400 group-hover:text-white transition-colors' />
+            <span>เข้าสู่ระบบด้วย Google</span>
+          </button>
 
-            <button 
-                type="button"
-                onClick={loginAsGuest}
-                className="w-full bg-transparent hover:bg-white/5 border border-dashed border-gray-600 hover:border-gray-400 text-gray-400 hover:text-white font-medium py-3 rounded-lg transition-all active:scale-95 flex items-center justify-center gap-2"
-            >
-                <User size={18} />
-                <span>เข้าใช้งานแบบ Guest (ทดลองเล่น)</span>
-            </button>
+          <button
+            type='button'
+            onClick={loginAsGuest}
+            className='w-full bg-transparent hover:bg-white/5 border border-dashed border-gray-600 hover:border-gray-400 text-gray-400 hover:text-white font-medium py-3 rounded-lg transition-all active:scale-95 flex items-center justify-center gap-2'
+          >
+            <User size={18} />
+            <span>เข้าใช้งานแบบ Guest (ทดลองเล่น)</span>
+          </button>
         </div>
       </form>
 
-      <div className="mt-8 text-center text-sm text-gray-400 animate-slide-up-fade delay-700 fill-mode-forwards opacity-0">
+      <div className='mt-8 text-center text-sm text-gray-400 animate-slide-up-fade delay-700 fill-mode-forwards opacity-0'>
         ยังไม่มีบัญชีใช่ไหม?{' '}
-        <button 
+        <button
           onClick={() => onNavigate('signup')}
-          className="text-primary hover:text-blue-400 font-semibold transition-colors hover:underline decoration-blue-500/30 underline-offset-4"
+          className='text-primary hover:text-blue-400 font-semibold transition-colors hover:underline decoration-blue-500/30 underline-offset-4'
         >
           สร้างบัญชีใหม่
         </button>

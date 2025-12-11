@@ -10,14 +10,14 @@ function AuthHarness() {
     void login('player@example.com', 'password123');
   }, [login]);
 
-  if (!user) return <div data-testid="loading">loading</div>;
+  if (!user) return <div data-testid='loading'>loading</div>;
 
   return (
     <div>
-      <div data-testid="user-name">{user.name}</div>
-      <div data-testid="favorites-count">{user.favorites.length}</div>
-      <div data-testid="credits">{user.credits}</div>
-      <div data-testid="rated">{user.ratedStoriesForBonus.join(',')}</div>
+      <div data-testid='user-name'>{user.name}</div>
+      <div data-testid='favorites-count'>{user.favorites.length}</div>
+      <div data-testid='credits'>{user.credits}</div>
+      <div data-testid='rated'>{user.ratedStoriesForBonus.join(',')}</div>
       <button onClick={() => toggleFavorite('story-1')}>fav</button>
       <button
         onClick={() => {
@@ -37,7 +37,7 @@ describe('auth-context', () => {
     render(
       <Providers>
         <AuthHarness />
-      </Providers>,
+      </Providers>
     );
 
     await waitFor(() => expect(screen.getByTestId('user-name').textContent).toContain('player'));
@@ -47,13 +47,15 @@ describe('auth-context', () => {
 
     fireEvent.click(screen.getByText('bonus'));
     expect(screen.getByTestId('rated').textContent).toContain('story-1');
-    await waitFor(() => expect(Number(screen.getByTestId('credits').textContent)).toBeGreaterThanOrEqual(10));
+    await waitFor(() =>
+      expect(Number(screen.getByTestId('credits').textContent)).toBeGreaterThanOrEqual(10)
+    );
 
     const creditsAfterBonus = Number(screen.getByTestId('credits').textContent);
 
     fireEvent.click(screen.getByText('spend'));
     await waitFor(() =>
-      expect(Number(screen.getByTestId('credits').textContent)).toBeLessThan(creditsAfterBonus),
+      expect(Number(screen.getByTestId('credits').textContent)).toBeLessThan(creditsAfterBonus)
     );
   });
 });

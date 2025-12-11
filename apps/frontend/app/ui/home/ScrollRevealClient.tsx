@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useEffect } from 'react';
 
@@ -12,7 +12,7 @@ export default function ScrollRevealClient() {
           }
         });
       },
-      { threshold: 0.15, rootMargin: '0px 0px -50px 0px' },
+      { threshold: 0.15, rootMargin: '0px 0px -50px 0px' }
     );
 
     document.querySelectorAll('.reveal-on-scroll').forEach((el) => observer.observe(el));
