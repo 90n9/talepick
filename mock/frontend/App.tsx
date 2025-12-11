@@ -1,4 +1,3 @@
-
 import React, { useState, createContext, useContext, useEffect, useRef } from 'react';
 import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
@@ -42,13 +41,13 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 const calculateMaxCredits = (achievements: string[], isGuest: boolean = false) => {
-    if (isGuest) return 10;
-    const base = 20;
-    const bonus = achievements.reduce((acc, achId) => {
-        const ach = SYSTEM_ACHIEVEMENTS.find(sa => sa.id === achId);
-        return acc + (ach && 'creditBonus' in ach ? (ach.creditBonus as number) : 0);
-    }, 0);
-    return base + bonus;
+  if (isGuest) return 10;
+  const base = 20;
+  const bonus = achievements.reduce((acc, achId) => {
+    const ach = SYSTEM_ACHIEVEMENTS.find((sa) => sa.id === achId);
+    return acc + (ach && 'creditBonus' in ach ? (ach.creditBonus as number) : 0);
+  }, 0);
+  return base + bonus;
 };
 
 const initialAchievements = ['first_step', 'critic'];
@@ -61,11 +60,11 @@ const MockUser: User = {
   playedStories: ['1'],
   endingsUnlocked: 3,
   favorites: ['1', '3'],
-  
+
   credits: 20,
   maxCredits: calculateMaxCredits(initialAchievements),
   lastRefillTime: Date.now(),
-  ratedStoriesForBonus: []
+  ratedStoriesForBonus: [],
 };
 
 // --- Main App ---
@@ -74,7 +73,7 @@ const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('home');
   const [previousPage, setPreviousPage] = useState<string | null>(null);
   const [activeStory, setActiveStory] = useState<Story | null>(null);
-  
+
   // Auth State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
@@ -87,46 +86,49 @@ const App: React.FC = () => {
     if (!isAuthenticated || !user) return;
 
     const checkRefill = () => {
-        const now = Date.now();
-        const timePassed = now - user.lastRefillTime;
+      const now = Date.now();
+      const timePassed = now - user.lastRefillTime;
 
-        if (timePassed >= REFILL_INTERVAL_MS && user.credits < user.maxCredits) {
-            const creditsToAdd = Math.floor(timePassed / REFILL_INTERVAL_MS);
-            if (creditsToAdd > 0) {
-                const newCredits = Math.min(user.maxCredits, user.credits + creditsToAdd);
-                // Reset timer to "now" minus the remainder to keep the cycle smooth
-                const remainder = timePassed % REFILL_INTERVAL_MS;
-                const newLastRefillTime = now - remainder;
+      if (timePassed >= REFILL_INTERVAL_MS && user.credits < user.maxCredits) {
+        const creditsToAdd = Math.floor(timePassed / REFILL_INTERVAL_MS);
+        if (creditsToAdd > 0) {
+          const newCredits = Math.min(user.maxCredits, user.credits + creditsToAdd);
+          // Reset timer to "now" minus the remainder to keep the cycle smooth
+          const remainder = timePassed % REFILL_INTERVAL_MS;
+          const newLastRefillTime = now - remainder;
 
-                setUser(prev => prev ? ({
-                    ...prev,
-                    credits: newCredits,
-                    lastRefillTime: newLastRefillTime
-                }) : null);
-            }
-        } else if (user.credits >= user.maxCredits) {
-            // If full, just update timestamp to now so when they spend, the timer starts fresh
-            setUser(prev => prev ? ({ ...prev, lastRefillTime: now }) : null);
+          setUser((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  credits: newCredits,
+                  lastRefillTime: newLastRefillTime,
+                }
+              : null
+          );
         }
+      } else if (user.credits >= user.maxCredits) {
+        // If full, just update timestamp to now so when they spend, the timer starts fresh
+        setUser((prev) => (prev ? { ...prev, lastRefillTime: now } : null));
+      }
     };
 
     const interval = setInterval(checkRefill, 1000); // Check every second
     return () => clearInterval(interval);
   }, [isAuthenticated, user?.credits, user?.lastRefillTime, user?.maxCredits]);
 
-
   const login = () => {
     setIsAuthenticated(true);
     if (!user) {
-        // Reset mock user with full credits on fresh login
-        setUser({
-            ...MockUser,
-            lastRefillTime: Date.now()
-        });
+      // Reset mock user with full credits on fresh login
+      setUser({
+        ...MockUser,
+        lastRefillTime: Date.now(),
+      });
     }
-    
+
     if (['login', 'signup', 'forgot-password'].includes(currentPage)) {
-        setCurrentPage(previousPage || 'home');
+      setCurrentPage(previousPage || 'home');
     }
   };
 
@@ -142,14 +144,14 @@ const App: React.FC = () => {
       endingsUnlocked: 0,
       favorites: [],
       isGuest: true,
-      credits: 10,       // Guest Limit
-      maxCredits: 10,    // Guest Max
+      credits: 10, // Guest Limit
+      maxCredits: 10, // Guest Max
       lastRefillTime: Date.now(),
-      ratedStoriesForBonus: []
+      ratedStoriesForBonus: [],
     });
 
     if (['login', 'signup', 'forgot-password'].includes(currentPage)) {
-        setCurrentPage(previousPage || 'home');
+      setCurrentPage(previousPage || 'home');
     }
   };
 
@@ -166,52 +168,55 @@ const App: React.FC = () => {
   };
 
   const deductCredit = (): boolean => {
-      if (!user) return false;
-      if (user.credits > 0) {
-          setUser({
-              ...user,
-              credits: user.credits - 1,
-              // If we were at max, the timer effectively starts now for the next refill
-              lastRefillTime: user.credits === user.maxCredits ? Date.now() : user.lastRefillTime
-          });
-          return true;
-      }
-      return false;
+    if (!user) return false;
+    if (user.credits > 0) {
+      setUser({
+        ...user,
+        credits: user.credits - 1,
+        // If we were at max, the timer effectively starts now for the next refill
+        lastRefillTime: user.credits === user.maxCredits ? Date.now() : user.lastRefillTime,
+      });
+      return true;
+    }
+    return false;
   };
 
   const addRatingBonus = (storyId: string): boolean => {
-      if (!user) return false;
-      
-      let newAchievements = [...user.achievements];
-      let newMaxCredits = user.maxCredits;
+    if (!user) return false;
 
-      // Unlock 'critic' achievement if not already owned
-      if (!newAchievements.includes('critic')) {
-          newAchievements.push('critic');
-          newMaxCredits = calculateMaxCredits(newAchievements, user.isGuest);
-      }
-      
-      // Check if already received bonus for this story
-      if (user.ratedStoriesForBonus.includes(storyId)) {
-           // Even if bonus received, we might have just updated achievements
-           if (newMaxCredits !== user.maxCredits || newAchievements.length !== user.achievements.length) {
-                setUser({
-                    ...user,
-                    achievements: newAchievements,
-                    maxCredits: newMaxCredits
-                });
-           }
-           return false;
-      }
+    let newAchievements = [...user.achievements];
+    let newMaxCredits = user.maxCredits;
 
-      setUser({
+    // Unlock 'critic' achievement if not already owned
+    if (!newAchievements.includes('critic')) {
+      newAchievements.push('critic');
+      newMaxCredits = calculateMaxCredits(newAchievements, user.isGuest);
+    }
+
+    // Check if already received bonus for this story
+    if (user.ratedStoriesForBonus.includes(storyId)) {
+      // Even if bonus received, we might have just updated achievements
+      if (
+        newMaxCredits !== user.maxCredits ||
+        newAchievements.length !== user.achievements.length
+      ) {
+        setUser({
           ...user,
           achievements: newAchievements,
           maxCredits: newMaxCredits,
-          credits: Math.min(newMaxCredits, user.credits + RATING_BONUS),
-          ratedStoriesForBonus: [...user.ratedStoriesForBonus, storyId]
-      });
-      return true;
+        });
+      }
+      return false;
+    }
+
+    setUser({
+      ...user,
+      achievements: newAchievements,
+      maxCredits: newMaxCredits,
+      credits: Math.min(newMaxCredits, user.credits + RATING_BONUS),
+      ratedStoriesForBonus: [...user.ratedStoriesForBonus, storyId],
+    });
+    return true;
   };
 
   const handleNavigate = (page: string) => {
@@ -234,22 +239,22 @@ const App: React.FC = () => {
 
   const handleStartPlaying = () => {
     if (!isAuthenticated) {
-        alert("กรุณาเข้าสู่ระบบก่อนเริ่มเล่น"); 
-        handleNavigate('login');
-        return;
+      alert('กรุณาเข้าสู่ระบบก่อนเริ่มเล่น');
+      handleNavigate('login');
+      return;
     }
     setCurrentPage('player');
   };
 
   const handleLoginRequired = () => {
-     handleNavigate('login');
+    handleNavigate('login');
   };
 
   const renderContent = () => {
     if (currentPage === 'player' && activeStory) {
       return (
-        <Player 
-          story={activeStory} 
+        <Player
+          story={activeStory}
           onExit={() => {
             setCurrentPage('story-detail');
           }}
@@ -263,58 +268,70 @@ const App: React.FC = () => {
 
     if (currentPage === 'login') return <Login onNavigate={handleNavigate} onBack={handleBack} />;
     if (currentPage === 'signup') return <Signup onNavigate={handleNavigate} onBack={handleBack} />;
-    if (currentPage === 'forgot-password') return <ForgotPassword onNavigate={handleNavigate} onBack={handleBack} />;
+    if (currentPage === 'forgot-password')
+      return <ForgotPassword onNavigate={handleNavigate} onBack={handleBack} />;
 
     const content = () => {
-        switch (currentPage) {
+      switch (currentPage) {
         case 'home':
-            return <Home onNavigate={handleNavigate} onSelectStory={handleSelectStory} />;
+          return <Home onNavigate={handleNavigate} onSelectStory={handleSelectStory} />;
         case 'library':
-            return <Library onSelectStory={handleSelectStory} />;
+          return <Library onSelectStory={handleSelectStory} />;
         case 'wishlist':
-            return (
-              <Library 
-                onSelectStory={handleSelectStory} 
-                onlyFavorites={true} 
-                favoriteIds={user?.favorites || []} 
-              />
-            );
+          return (
+            <Library
+              onSelectStory={handleSelectStory}
+              onlyFavorites={true}
+              favoriteIds={user?.favorites || []}
+            />
+          );
         case 'story-detail':
-            if (!activeStory) return <Library onSelectStory={handleSelectStory} />;
-            return (
-              <StoryDetail 
-                story={activeStory}
-                onPlay={handleStartPlaying}
-                onBack={() => handleNavigate('library')}
-                onSelectStory={handleSelectStory}
-                isAuthenticated={isAuthenticated}
-                onLoginRequired={handleLoginRequired}
-              />
-            );
+          if (!activeStory) return <Library onSelectStory={handleSelectStory} />;
+          return (
+            <StoryDetail
+              story={activeStory}
+              onPlay={handleStartPlaying}
+              onBack={() => handleNavigate('library')}
+              onSelectStory={handleSelectStory}
+              isAuthenticated={isAuthenticated}
+              onLoginRequired={handleLoginRequired}
+            />
+          );
         case 'oracle':
-            return <Oracle onSelectStory={(id) => console.log(id)} />;
+          return <Oracle onSelectStory={(id) => console.log(id)} />;
         case 'support':
-            return <Support />;
+          return <Support />;
         case 'terms':
-            return <TermsOfUse />;
+          return <TermsOfUse />;
         case 'privacy':
-            return <PrivacyPolicy />;
+          return <PrivacyPolicy />;
         case 'profile':
-            return <Profile onNavigate={handleNavigate} onSelectStory={handleSelectStory} />;
+          return <Profile onNavigate={handleNavigate} onSelectStory={handleSelectStory} />;
         default:
-            return <Home onNavigate={handleNavigate} onSelectStory={handleSelectStory} />;
-        }
-    }
+          return <Home onNavigate={handleNavigate} onSelectStory={handleSelectStory} />;
+      }
+    };
 
     return (
-        <Layout onNavigate={handleNavigate} currentPage={currentPage}>
-            {content()}
-        </Layout>
+      <Layout onNavigate={handleNavigate} currentPage={currentPage}>
+        {content()}
+      </Layout>
     );
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, login, loginAsGuest, logout, updateUser, deductCredit, addRatingBonus }}>
+    <AuthContext.Provider
+      value={{
+        isAuthenticated,
+        user,
+        login,
+        loginAsGuest,
+        logout,
+        updateUser,
+        deductCredit,
+        addRatingBonus,
+      }}
+    >
       {renderContent()}
     </AuthContext.Provider>
   );

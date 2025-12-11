@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  # Frontend Application
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URL=mongodb://root:example@mongo:27017/talepick
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  # Admin Application
+  admin:
+    build:
+      context: .
+      dockerfile: Dockerfile.admin
+    ports:
+      - '3001:3001'
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URL=mongodb://root:example@mongo:27017/talepick
+      - NEXT_PUBLIC_APP_URL=http://localhost:3001
+    depends_on:
+      - mongo
+    restart: unless-stopped
+
+  # MongoDB Database
+  mongo:
+    image: mongo:7
+    container_name: talepick-mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mongo_data:

@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from '@google/genai';
 
 // This is a placeholder service. In a real app, you would verify the API key availability.
 // The component using this should handle the missing API key error gracefully.
@@ -12,7 +12,7 @@ export const translateText = async (text: string, targetLang: string = 'Thai'): 
   const ai = getAIClient();
   if (!ai) {
     // Simulate delay for mock environment
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     return `[จำลองการแปลเป็น${targetLang}]: ${text}`;
   }
 
@@ -23,7 +23,7 @@ export const translateText = async (text: string, targetLang: string = 'Thai'): 
     });
     return response.text.trim();
   } catch (error) {
-    console.error("Gemini Translation Error:", error);
+    console.error('Gemini Translation Error:', error);
     return `[เกิดข้อผิดพลาดในการแปล]: ${text}`;
   }
 };
@@ -31,8 +31,8 @@ export const translateText = async (text: string, targetLang: string = 'Thai'): 
 export const generateSceneDescription = async (context: string): Promise<string> => {
   const ai = getAIClient();
   if (!ai) {
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    return "ห้องลึกลับที่เต็มไปด้วยวัตถุโบราณ ฝุ่นละอองลอยฟุ้งต้องแสงที่ส่องผ่านเพดานลงมา";
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    return 'ห้องลึกลับที่เต็มไปด้วยวัตถุโบราณ ฝุ่นละอองลอยฟุ้งต้องแสงที่ส่องผ่านเพดานลงมา';
   }
 
   try {
@@ -42,7 +42,7 @@ export const generateSceneDescription = async (context: string): Promise<string>
     });
     return response.text.trim();
   } catch (error) {
-    console.error("Gemini Generation Error:", error);
-    return "ไม่สามารถสร้างคำบรรยายได้";
+    console.error('Gemini Generation Error:', error);
+    return 'ไม่สามารถสร้างคำบรรยายได้';
   }
 };

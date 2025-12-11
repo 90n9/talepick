@@ -1,4 +1,3 @@
-
 export interface Story {
   id: string;
   title: string;
@@ -14,7 +13,7 @@ export interface Story {
   isPopular?: boolean;
   comingSoon?: boolean;
   launchDate?: string;
-  
+
   // Media
   trailerUrl?: string; // YouTube URL
   gallery?: string[]; // Array of image URLs
@@ -52,7 +51,7 @@ export interface User {
   endingsUnlocked: number;
   favorites: string[];
   isGuest?: boolean;
-  
+
   // Credit System
   credits: number;
   maxCredits: number;
@@ -76,5 +75,5 @@ export enum GameState {
   IDLE,
   PLAYING,
   CHOICE,
-  ENDED
+  ENDED,
 }

@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { MOCK_STORIES } from "@lib/constants";
-import FeaturedStoriesSection from "./home/FeaturedStoriesSection";
-import HeroSection from "./home/HeroSection";
-import HowItWorksSection from "./home/HowItWorksSection";
-import ReviewsSection from "./home/ReviewsSection";
-import ScrollRevealClient from "./home/ScrollRevealClient";
-import { useEffect, useState } from "react";
+import { MOCK_STORIES } from '@lib/constants';
+import FeaturedStoriesSection from './home/FeaturedStoriesSection';
+import HeroSection from './home/HeroSection';
+import HowItWorksSection from './home/HowItWorksSection';
+import ReviewsSection from './home/ReviewsSection';
+import ScrollRevealClient from './home/ScrollRevealClient';
+import { useEffect, useState } from 'react';
 
 export default function HomeContent() {
   const [scrollY, setScrollY] = useState(0);
@@ -14,8 +14,8 @@ export default function HomeContent() {
 
   useEffect(() => {
     const handler = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", handler);
-    return () => window.removeEventListener("scroll", handler);
+    window.addEventListener('scroll', handler);
+    return () => window.removeEventListener('scroll', handler);
   }, []);
 
   return (

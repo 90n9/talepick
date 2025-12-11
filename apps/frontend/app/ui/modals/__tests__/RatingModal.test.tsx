@@ -6,14 +6,7 @@ describe('RatingModal', () => {
     const onSubmit = vi.fn();
     const onClose = vi.fn();
 
-    render(
-      <RatingModal
-        isOpen
-        onClose={onClose}
-        onSubmit={onSubmit}
-        storyTitle="Test Story"
-      />,
-    );
+    render(<RatingModal isOpen onClose={onClose} onSubmit={onSubmit} storyTitle='Test Story' />);
 
     fireEvent.click(screen.getAllByRole('button', { name: '' })[4]); // 5th star
     fireEvent.change(screen.getByPlaceholderText(/บอกเล่าความประทับใจ/), {

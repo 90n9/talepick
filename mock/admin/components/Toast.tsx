@@ -21,7 +21,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const addToast = useCallback((message: string, type: ToastType = 'success') => {
     const id = Math.random().toString(36).substr(2, 9);
     setToasts((prev) => [...prev, { id, message, type }]);
-    
+
     // Auto remove after 3 seconds
     setTimeout(() => {
       removeToast(id);
@@ -35,7 +35,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={{ addToast }}>
       {children}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col space-y-3 pointer-events-none">
+      <div className='fixed bottom-4 right-4 z-50 flex flex-col space-y-3 pointer-events-none'>
         {toasts.map((toast) => (
           <div
             key={toast.id}
@@ -46,19 +46,19 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               ${toast.type === 'warning' ? 'bg-yellow-500' : ''}
             `}
           >
-            <div className="flex-shrink-0">
+            <div className='flex-shrink-0'>
               {toast.type === 'success' && <CheckCircle size={20} />}
               {toast.type === 'error' && <AlertCircle size={20} />}
               {toast.type === 'info' && <Info size={20} />}
               {toast.type === 'warning' && <AlertTriangle size={20} />}
             </div>
-            <div className="ml-3 flex-1">
-              <p className="text-sm font-medium">{toast.message}</p>
+            <div className='ml-3 flex-1'>
+              <p className='text-sm font-medium'>{toast.message}</p>
             </div>
-            <div className="ml-4 flex-shrink-0 flex">
+            <div className='ml-4 flex-shrink-0 flex'>
               <button
                 onClick={() => removeToast(toast.id)}
-                className="inline-flex text-white opacity-70 hover:opacity-100 focus:outline-none"
+                className='inline-flex text-white opacity-70 hover:opacity-100 focus:outline-none'
               >
                 <X size={18} />
               </button>

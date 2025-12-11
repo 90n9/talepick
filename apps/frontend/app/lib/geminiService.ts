@@ -2,10 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import type { Story } from './types';
 
 // Consult the Oracle: recommend a story based on mood and available stories.
-export const getGeminiRecommendation = async (
-  mood: string,
-  stories: Story[],
-): Promise<string> => {
+export const getGeminiRecommendation = async (mood: string, stories: Story[]): Promise<string> => {
   try {
     const apiKey =
       typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_GEMINI_API_KEY : undefined;
