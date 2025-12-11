@@ -33,6 +33,7 @@ import StoryCard from "@ui/StoryCard";
 import RatingModal from "@ui/modals/RatingModal";
 import ReportModal from "@ui/modals/ReportModal";
 import { MOCK_REVIEWS, MOCK_STORIES } from "@lib/constants";
+import { useAuth } from "@lib/auth-context";
 import type { Review } from "@lib/types";
 
 type MediaItem = {
@@ -62,6 +63,7 @@ function getYouTubeEmbedUrl(url: string) {
 export default function StoryDetailPage() {
   const router = useRouter();
   const params = useParams<{ id?: string }>();
+  const { isAuthenticated, user, toggleFavorite, addRatingBonus, markStoryPlayed } = useAuth();
 
   const storyId = useMemo(() => {
     if (!params?.id) return undefined;
@@ -73,7 +75,6 @@ export default function StoryDetailPage() {
     [storyId],
   );
 
-  const [isFavorite, setIsFavorite] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
@@ -87,8 +88,10 @@ export default function StoryDetailPage() {
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [showAllReviews, setShowAllReviews] = useState(false);
 
-  // TODO: wire real auth state
-  const isAuthenticated = false;
+  const isFavorite = useMemo(
+    () => Boolean(user && storyId && user.favorites.includes(storyId)),
+    [storyId, user],
+  );
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
@@ -142,6 +145,14 @@ export default function StoryDetailPage() {
 
   const handlePlayClick = () => {
     if (story.comingSoon) return;
+    if (!isAuthenticated) {
+      const redirect = encodeURIComponent(`/play/${story.id}`);
+      router.push(`/auth/login?redirect=${redirect}`);
+      return;
+    }
+    if (storyId) {
+      markStoryPlayed(storyId);
+    }
     router.push(`/play/${story.id}`);
   };
 
@@ -172,9 +183,18 @@ export default function StoryDetailPage() {
   };
 
   const handleRatingSubmit = (rating: number, comment: string) => {
-    console.log(`Submitted review for ${story.title}: ${rating} stars`, comment);
+    if (!isAuthenticated) {
+      setToastMessage("กรุณาเข้าสู่ระบบก่อนรีวิว");
+      setIsToastError(true);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 4000);
+      return;
+    }
+
+    console.log("Rating submitted", { storyId: story.id, rating, comment });
+    const bonusApplied = addRatingBonus(story.id);
     setIsRatingModalOpen(false);
-    setToastMessage("บันทึกรีวิวสำเร็จ!");
+    setToastMessage(bonusApplied ? "บันทึกรีวิวสำเร็จ! รับเครดิตโบนัส" : "บันทึกรีวิวสำเร็จ!");
     setIsToastError(false);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 4000);
@@ -191,6 +211,17 @@ export default function StoryDetailPage() {
     setIsToastError(false);
     setShowToast(true);
     setTimeout(() => setShowToast(false), 4000);
+  };
+
+  const handleFavoriteToggle = () => {
+    if (!isAuthenticated) {
+      setToastMessage("กรุณาเข้าสู่ระบบเพื่อบันทึกรายการโปรด");
+      setIsToastError(true);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 4000);
+      return;
+    }
+    toggleFavorite(story.id);
   };
 
   const handleShare = async () => {
@@ -393,7 +424,7 @@ export default function StoryDetailPage() {
             </button>
 
             <button
-              onClick={() => setIsFavorite(!isFavorite)}
+              onClick={handleFavoriteToggle}
               className={`flex items-center gap-2 rounded-full border px-6 py-4 font-semibold backdrop-blur-sm transition cursor-pointer ${
                 isFavorite
                   ? "border-pink-500 bg-pink-500/20 text-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.3)]"

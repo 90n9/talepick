@@ -2,7 +2,8 @@
 
 import type { ReactNode } from 'react';
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
-import { SYSTEM_ACHIEVEMENTS } from './constants';
+import { useEffect } from 'react';
+import { REFILL_INTERVAL_MS, SYSTEM_ACHIEVEMENTS } from './constants';
 import type { User } from './types';
 
 type SignupPayload = {
@@ -17,6 +18,11 @@ type AuthContextValue = {
   login: (email: string, password: string) => Promise<void>;
   loginAsGuest: () => void;
   logout: () => void;
+  updateUser: (updates: Partial<User>) => void;
+  toggleFavorite: (storyId: string) => void;
+  markStoryPlayed: (storyId: string) => void;
+  addRatingBonus: (storyId: string) => boolean;
+  spendCredit: () => boolean;
   startSignup: (payload: SignupPayload) => Promise<void>;
   verifySignupOtp: (code: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
@@ -169,6 +175,110 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [resetEmail, resetOtpVerified],
   );
 
+  const updateUser = useCallback((updates: Partial<User>) => {
+    setUser((previous) => {
+      if (!previous) return previous;
+
+      const achievements = updates.achievements ?? previous.achievements;
+      const isGuest = updates.isGuest ?? previous.isGuest;
+      const maxCredits = calculateMaxCredits(achievements, isGuest);
+      const credits = Math.min(updates.credits ?? previous.credits, maxCredits);
+
+      return {
+        ...previous,
+        ...updates,
+        achievements,
+        isGuest,
+        credits,
+        maxCredits,
+      };
+    });
+  }, []);
+
+  const toggleFavorite = useCallback((storyId: string) => {
+    setUser((previous) => {
+      if (!previous) return previous;
+      const exists = previous.favorites.includes(storyId);
+      const favorites = exists
+        ? previous.favorites.filter((id) => id !== storyId)
+        : [...previous.favorites, storyId];
+
+      return { ...previous, favorites };
+    });
+  }, []);
+
+  const markStoryPlayed = useCallback((storyId: string) => {
+    setUser((previous) => {
+      if (!previous) return previous;
+      if (previous.playedStories.includes(storyId)) return previous;
+      return { ...previous, playedStories: [...previous.playedStories, storyId] };
+    });
+  }, []);
+
+  const addRatingBonus = useCallback(
+    (storyId: string) => {
+      let applied = false;
+      setUser((previous) => {
+        if (!previous) return previous;
+        if (previous.ratedStoriesForBonus.includes(storyId)) return previous;
+
+        const nextRated = [...previous.ratedStoriesForBonus, storyId];
+        const achievements = previous.achievements.includes('critic')
+          ? previous.achievements
+          : [...previous.achievements, 'critic'];
+        const maxCredits = calculateMaxCredits(achievements, previous.isGuest);
+        const credits = Math.min(previous.credits + 5, maxCredits);
+
+        applied = true;
+        return { ...previous, ratedStoriesForBonus: nextRated, achievements, maxCredits, credits };
+      });
+      return applied;
+    },
+    [],
+  );
+
+  const spendCredit = useCallback(() => {
+    let success = false;
+    setUser((previous) => {
+      if (!previous) return previous;
+      if (previous.credits <= 0) return previous;
+      success = true;
+      return {
+        ...previous,
+        credits: previous.credits - 1,
+        lastRefillTime: previous.credits === previous.maxCredits ? Date.now() : previous.lastRefillTime,
+      };
+    });
+    return success;
+  }, []);
+
+  useEffect(() => {
+    if (!user) return undefined;
+    if (user.credits >= user.maxCredits) return undefined;
+
+    const interval = setInterval(() => {
+      setUser((previous) => {
+        if (!previous) return previous;
+        if (previous.credits >= previous.maxCredits) return previous;
+
+        const now = Date.now();
+        const elapsed = now - previous.lastRefillTime;
+        if (elapsed < REFILL_INTERVAL_MS) return previous;
+
+        const creditsToAdd = Math.floor(elapsed / REFILL_INTERVAL_MS);
+        if (creditsToAdd <= 0) return previous;
+
+        const newCredits = Math.min(previous.maxCredits, previous.credits + creditsToAdd);
+        const remainder = elapsed % REFILL_INTERVAL_MS;
+        const nextRefillTime = now - remainder;
+
+        return { ...previous, credits: newCredits, lastRefillTime: nextRefillTime };
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [user]);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       isAuthenticated,
@@ -176,6 +286,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       loginAsGuest,
       logout,
+      updateUser,
+      toggleFavorite,
+      markStoryPlayed,
+      addRatingBonus,
+      spendCredit,
       startSignup,
       verifySignupOtp,
       requestPasswordReset,
@@ -189,6 +304,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       loginAsGuest,
       logout,
+      updateUser,
+      toggleFavorite,
+      markStoryPlayed,
+      addRatingBonus,
+      spendCredit,
       pendingSignup?.email,
       requestPasswordReset,
       resetEmail,

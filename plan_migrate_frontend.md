@@ -28,10 +28,10 @@ Goal: move the Vite React app in `mock/frontend` into the Next.js App Router app
 - [x] T17 Page logic StoryDetail: port logic, hook services, modals; ensure loading/error states; add interaction test; lint/build.
 - [x] T18 Page logic Player: port logic, media controls; add interaction test; lint/build.
 - [x] T19 Auth pages batch: Login, Signup, ForgotPassword flows; connect to auth logic/context; add tests for success/error paths; lint/build.
-- [ ] T20 Profile page: port profile view/edit; reuse EditProfileModal; test save/error; lint/build.
-- [ ] T21 Static/support pages: Support, PrivacyPolicy, TermsOfUse, Oracle content and metadata; lint/build.
-- [ ] T22 Auth/data wiring: centralize auth/user state (context or server actions), ensure hooks are client and services are shared; add unit/integration tests; lint/build.
-- [ ] T23 Final cleanup: remove unused imports, keep files <200 lines by extracting helpers, align CSS/tokens in `app/globals.css`, update `apps/frontend/README.md` with run commands/env requirements, final `npm run lint -w frontend`, `npm run build -w frontend`, and tests.
+- [x] T20 Profile page: port profile view/edit; reuse EditProfileModal; test save/error; lint/build.
+- [x] T21 Static/support pages: Support, PrivacyPolicy, TermsOfUse, Oracle content and metadata; lint/build.
+- [x] T22 Auth/data wiring: centralize auth/user state (context or server actions), ensure hooks are client and services are shared; add unit/integration tests; lint/build.
+- [x] T23 Final cleanup: remove unused imports, keep files <200 lines by extracting helpers, align CSS/tokens in `app/globals.css`, update `apps/frontend/README.md` with run commands/env requirements, final `npm run lint -w frontend`, `npm run build -w frontend`, and tests.
 
 ## Notes
 - T01 baseline: `npm run lint -w frontend` passes; `npm run build -w frontend` needs `--webpack` in this environment (Turbopack fails with “binding to a port” permission error).

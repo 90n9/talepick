@@ -8,7 +8,7 @@ export const getGeminiRecommendation = async (
 ): Promise<string> => {
   try {
     const apiKey =
-      typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_API_KEY : undefined;
+      typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_GEMINI_API_KEY : undefined;
 
     if (!apiKey) {
       console.warn('API Key missing for Gemini.');

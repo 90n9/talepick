@@ -1,0 +1,10 @@
+export const SYSTEM_AVATARS = [
+  { id: 'default_1', src: 'https://picsum.photos/seed/avatar1/200/200', name: 'Newcomer', type: 'free' },
+  { id: 'default_2', src: 'https://picsum.photos/seed/avatar2/200/200', name: 'Adventurer', type: 'free' },
+  { id: 'default_3', src: 'https://picsum.photos/seed/avatar3/200/200', name: 'Dreamer', type: 'free' },
+  { id: 'default_4', src: 'https://picsum.photos/seed/avatar4/200/200', name: 'Observer', type: 'free' },
+  { id: 'cyber_1', src: 'https://picsum.photos/seed/cyber_avatar/200/200', name: 'Netrunner', type: 'unlock', requiredStoryId: '1', hint: 'จบเรื่อง \"โปรโตคอลนีออน\"' },
+  { id: 'horror_1', src: 'https://picsum.photos/seed/horror_avatar/200/200', name: 'Survivor', type: 'unlock', requiredStoryId: '2', hint: 'จบเรื่อง \"เสียงกระซิบจากทวยเทพ\"' },
+  { id: 'mage_1', src: 'https://picsum.photos/seed/mage_avatar/200/200', name: 'Alchemist', type: 'unlock', requiredStoryId: '3', hint: 'จบเรื่อง \"นักเล่นแร่แปรธาตุ\"' },
+  { id: 'space_1', src: 'https://picsum.photos/seed/space_avatar/200/200', name: 'Astronaut', type: 'unlock', requiredStoryId: '5', hint: 'จบเรื่อง \"รักวุ่นๆ ในวงโคจร\"' },
+];
