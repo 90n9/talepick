@@ -9,5 +9,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "@types/mongoose": "^5.11.96",
+    "mongoose": "^9.0.1",
+    "vitest": "^4.0.15"
+  }
 }
