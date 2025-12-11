@@ -2,8 +2,8 @@
 
 ## Base URL
 ```
-Production: https://api.talepick.com
-Development: http://localhost:3001
+Production: https://talepick.com/api
+Development: http://localhost:3000/api
 ```
 
 ## Authentication

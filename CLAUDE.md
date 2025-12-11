@@ -8,20 +8,54 @@ TalePick is a Thai-language interactive story platform built as a monorepo with 
 
 ## Architecture
 
-### Monorepo Structure
-- **Root**: Uses npm workspaces
-- **Frontend App** (`/apps/frontend/`): Port 3000 - Main user application
-- **Admin App** (`/apps/admin/`): Port 3001 - Admin dashboard
-- **Database**: MongoDB running on Docker Compose (port 27017)
+### Clean Architecture Implementation
+- **Framework**: Clean Architecture with dependency injection
+- **Monorepo Structure**: Uses npm workspaces with shared packages
+- **Apps**:
+  - **Frontend App** (`/apps/frontend/`): Port 3000 - Main user application
+  - **Admin App** (`/apps/admin/): Port 3001 - Admin dashboard
+- **Packages**:
+  - **Domain Layer** (`packages/domain/`): Business entities and rules
+  - **Application Layer** (`packages/application/`): Use cases and business logic
+  - **Infrastructure Layer** (`packages/infrastructure/`): Database and external services
+  - **Presentation Layer** (`packages/presentation/`): API controllers and middleware
+  - **Shared Layer** (`packages/shared/`): Types, utilities, constants
+  - **Testing Layer** (`packages/testing/`): Mocks, factories, test utilities
+- **Database**: MongoDB with 24 collections (see `docs/database/`)
   - Default credentials: `root` / `example`
 
 ### Tech Stack
-- Next.js 16 with App Router
+- Next.js 16 with App Router and API Routes
 - React 19
 - TypeScript 5
 - Tailwind CSS 4
-- Vitest for testing
+- Vitest + Playwright for testing
 - Google Generative AI integration
+- MongoDB with Mongoose ODM
+- Clean Architecture principles
+- Dependency Injection (tsyringe)
+
+### Folder Structure Reference
+For detailed folder structure and file organization, see **@FOLDER_STRUCTURE.md**. Key patterns:
+
+```typescript
+// Domain Layer (Business rules, no external deps)
+packages/domain/entities/User.ts
+packages/domain/services/CreditService.ts
+packages/domain/repositories/IUserRepository.ts
+
+// Application Layer (Use cases, orchestrates domain)
+packages/application/use-cases/SpendCreditsUseCase.ts
+packages/application/services/UserAuthService.ts
+
+// Infrastructure Layer (Database, external APIs)
+packages/infrastructure/repositories/MongoUserRepository.ts
+packages/infrastructure/jwt/UserJWTService.ts
+
+// Presentation Layer (API controllers, middleware)
+packages/presentation/controllers/stories/GetStoriesController.ts
+packages/presentation/middleware/user-auth.middleware.ts
+```
 
 ## Development Commands
 
@@ -101,6 +135,29 @@ Next.js Image optimization configured for:
 
 ## Code Organization
 
+### Clean Architecture Structure
+See `@FOLDER_STRUCTURE.md` for complete implementation guide. The project follows these layers:
+
+**Domain Layer** (`src/domain/`):
+- Entities: Core business objects (User, Story, Choice, etc.)
+- Repository Interfaces: Contracts for data access
+- Domain Services: Business rules and validation
+
+**Application Layer** (`src/application/`):
+- Use Cases: User stories and business operations
+- DTOs: Data transfer objects between layers
+- Application Services: Orchestrate use cases
+
+**Infrastructure Layer** (`src/infrastructure/`):
+- Database: MongoDB implementations of repositories
+- Authentication: JWT, Google OAuth services
+- External APIs: Payment, notification services
+
+**Presentation Layer** (`src/presentation/`):
+- Controllers: HTTP request/response handling
+- Middleware: Authentication, validation, error handling
+- API Routes: Next.js app/api routes
+
 ### Frontend (`/apps/frontend/`)
 ```
 app/
@@ -111,7 +168,19 @@ app/
 ├── lib/              # Utilities, services, types
 ├── ui/               # Reusable components
 └── globals.css       # Tailwind styles
+
+src/
+├── domain/           # Domain layer (shared)
+├── application/      # Application layer (shared)
+├── infrastructure/   # Infrastructure layer (shared)
+└── presentation/     # Presentation layer (shared)
 ```
+
+### Database Schema
+- All database schemas and relations are documented in `@docs/database/`
+- 24 collections designed for complete system functionality
+- Separate user and admin collections for security
+- MongoDB with Docker Compose setup
 
 ### Key Files
 - `app/lib/auth-context.tsx` - Authentication state management
@@ -136,9 +205,68 @@ app/
 - Configuration in `app/lib/ai-service.ts`
 
 ### Backend Status
-- Backend service is not yet implemented
-- Currently using mock data for stories, reviews, and achievements
-- MongoDB is configured but not actively used by frontend
+- Backend is implemented using Next.js API routes with Clean Architecture
+- MongoDB is actively used with Mongoose ODM
+- Real database operations for all features
+
+### Database Schema and Relations
+For complete database schema, relationships, and entity mappings, refer to **docs/database/**.
+
+#### Key Database Collections (see docs/database/ for complete schema)
+- **Users Collection**: User accounts, authentication, profiles, game statistics
+- **AdminAccounts Collection**: Administrator accounts and permissions (separate from Users)
+- **Stories Collection**: Story content, metadata, media assets
+- **StoryNodes Collection**: Individual story nodes with branching choices
+- **Achievements Collection**: Achievement definitions and unlocking conditions
+- **Reviews Collection**: User reviews, ratings, and moderation
+- **CreditTransactions Collection**: Credit economy transaction history
+
+#### Database Security Notes
+- **Separate Collections**: Users and AdminAccounts are completely separate for security
+- **Soft Delete**: All collections support soft deletion for GDPR compliance
+- **Indexing**: Optimized indexes for performance
+- **Relationships**: Foreign key references between collections
+
+#### Schema Reference Examples
+```typescript
+// User Collection (docs/database/collections/users.md)
+{
+  _id: ObjectId,
+  email: String,              // unique, indexed
+  authentication: {
+    authMethod: 'email' | 'google' | 'guest',
+    isGuest: Boolean,
+    emailVerified: Boolean
+  },
+  gameStats: {
+    credits: Number,           // Current credits
+    maxCredits: Number,         // Maximum credit limit
+    lastCreditRefill: Date
+  },
+  accountStatus: {
+    status: 'active' | 'suspended' | 'banned'
+  }
+}
+
+// Story Collection (docs/database/collections/stories.md)
+{
+  _id: ObjectId,
+  title: String,
+  metadata: {
+    genre: String,           // References Genres collection
+    isPublished: Boolean,
+    contentRating: {
+      ageRating: Number,      // 0, 13, 16, 18+
+      violenceLevel: String
+    }
+  },
+  stats: {
+    totalPlayers: Number,
+    averageRating: Number,
+    totalEndings: Number
+  }
+}
+```
 
 ## Common Patterns
 

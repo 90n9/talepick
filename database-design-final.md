@@ -92,13 +92,14 @@ graph TB
 | **UserFavorites** | Story favorites | Rich metadata and interaction tracking |
 | **UserStoryProgress** | Game progress | Multiple playthroughs, choice tracking |
 
-### Content System (4 collections)
+### Content System (5 collections)
 
 | Collection | Purpose | Key Features |
 |------------|---------|--------------|
-| **Stories** | Story metadata | Content rating, moderation, media assets |
+| **Stories** | Story metadata | Content rating, moderation, media assets, gallery |
 | **StoryNodes** | Story content | Branching choices, rewards, endings |
 | **StoryAssets** | Media files | Multi-storage support, moderation |
+| **StoryGallery** | Story image gallery | Cached URLs, metadata, ordering |
 | **Genres** | Story categories | Thai language support |
 
 ### Game Mechanics (3 collections)
@@ -141,7 +142,7 @@ graph TB
 |------------|---------|--------------|
 | **SystemConfig** | System settings | Runtime configuration, feature flags |
 
-**Total Collections**: 23 collections covering all aspects of the TalePick platform
+**Total Collections**: 24 collections covering all aspects of the TalePick platform
 
 ---
 
@@ -257,7 +258,15 @@ graph TB
     coverImageUrl: String,
     headerImageUrl: String,
     coverVideoUrl: String,
-    bgMusicUrl: String
+    bgMusicUrl: String,
+    trailerUrl: String           // YouTube/Vimeo URL for story trailer
+  },
+
+  // Story Gallery (references StoryGallery collection)
+  gallery: {
+    imageIds: [String],         // Array of StoryGallery image IDs
+    totalImages: Number,        // Denormalized count for quick access
+    featuredImageId: String     // Primary gallery image ID
   },
 
   // Performance Statistics
@@ -298,6 +307,9 @@ graph TB
 - `content.startingNodeId` (for finding starting nodes)
 - `stats.totalPlayers` (descending)
 - `stats.averageRating` (descending)
+- `gallery.totalImages` (for filtering stories with galleries)
+- `gallery.featuredImageId` (quick featured image lookup)
+- `media.trailerUrl` (for stories with trailers)
 - `deletedAt` (sparse)
 - `moderation.status`
 
@@ -349,6 +361,54 @@ db.Stories.find({
   $text: { $search: "romance story" },
   "contentRating.contentWarnings": { $nin: ["violence", "horror"] }
 }).sort({ score: { $meta: "textScore" } });
+
+// Get stories with gallery images for carousel display
+db.Stories.find({
+  "metadata.isPublished": true,
+  "gallery.totalImages": { $gt: 0 }
+})
+.select({
+  title: 1,
+  "media.coverImageUrl": 1,
+  "media.trailerUrl": 1,
+  "gallery.featuredImageId": 1,
+  "stats.averageRating": 1,
+  "metadata.genre": 1
+});
+
+// Get story with gallery information
+db.Stories.aggregate([
+  { $match: { _id: ObjectId("story_id") } },
+  { $lookup: {
+    from: "StoryGallery",
+    localField: "gallery.imageIds",
+    foreignField: "galleryImageId",
+    as: "galleryImages"
+  }},
+  { $project: {
+    title: 1,
+    "media.coverImageUrl": 1,
+    "media.trailerUrl": 1,
+    "stats.averageRating": 1,
+    "metadata.genre": 1,
+    gallery: {
+      totalImages: 1,
+      featuredImageId: 1,
+      images: {
+        $map: {
+          input: "$galleryImages",
+          as: "img",
+          in: {
+            galleryImageId: "$$img.galleryImageId",
+            name: "$$img.name",
+            caption: "$$img.caption",
+            urls: "$$img.urls"
+          }
+        }
+      }
+    }
+  }}
+]);
 ```
 
 **Content Rating Guidelines**:
@@ -762,7 +822,7 @@ const gameSettings = await db.SystemConfig.find(
 - `category`
 - `isPublic`
 
-### 6. StoryNodes Collection
+### 7. StoryNodes Collection
 
 **Purpose**: Individual story nodes with branching choices and rewards
 
@@ -847,7 +907,7 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 7. StoryAssets Collection
+### 8. StoryAssets Collection
 
 **Purpose**: Media assets management for stories
 
@@ -911,7 +971,195 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 8. Genres Collection
+### 9. StoryGallery Collection
+
+**Purpose**: Story image gallery management with cached URLs for performance optimization
+
+```javascript
+{
+  _id: ObjectId,
+  galleryImageId: String,        // unique identifier
+  storyId: ObjectId,             // references Stories
+
+  // Image Information
+  name: String,
+  description: String,
+  caption: String,               // Thai caption for the image
+
+  // Asset Reference (links to StoryAssets)
+  assetId: String,               // references StoryAssets.assetId
+
+  // Cached URLs (denormalized for performance - no joins needed)
+  urls: {
+    original: String,            // Full resolution image URL
+    large: String,               // 1200x800 or similar
+    medium: String,              // 800x533 or similar
+    thumbnail: String,           // 300x200 or similar
+    small: String                // 150x100 or similar
+  },
+
+  // Image Metadata
+  metadata: {
+    width: Number,
+    height: Number,
+    fileSize: Number,            // in bytes
+    mimeType: String,            // 'image/jpeg', 'image/png', etc.
+    aspectRatio: String          // '16:9', '4:3', etc.
+  },
+
+  // Display Settings
+  display: {
+    sortOrder: Number,           // Order in gallery (1, 2, 3...)
+    isFeatured: Boolean,         // Primary gallery image
+    isHidden: Boolean,           // Hide from public gallery
+    showInPreview: Boolean       // Show in story preview carousel
+  },
+
+  // Moderation
+  moderation: {
+    status: String,              // 'pending' | 'approved' | 'rejected'
+    reviewedBy: ObjectId,
+    reviewedAt: Date,
+    notes: String
+  },
+
+  // Analytics
+  analytics: {
+    viewCount: Number,           // How many times this image was viewed
+    clickCount: Number,          // How many times this image was clicked
+    lastViewedAt: Date
+  },
+
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+**Key Design Principles**:
+- ✅ **URL Caching**: All image sizes cached as direct URLs to avoid $lookup joins with StoryAssets
+- ✅ **Performance Optimized**: Frontend can directly access URLs without additional queries
+- ✅ **Multiple Sizes**: Automatic thumbnail generation for different use cases
+- ✅ **Thai Language Support**: Captions and descriptions in Thai
+- ✅ **Moderation Ready**: Built-in moderation workflow for gallery images
+
+**Key Indexes**:
+- `galleryImageId` (unique)
+- `storyId` + `display.sortOrder` (for ordered gallery retrieval)
+- `storyId` + `display.isFeatured` (quick featured image lookup)
+- `storyId` + `moderation.status` (filter approved images)
+- `display.showInPreview` + `storyId` (preview carousel images)
+
+**Query Examples**:
+```javascript
+// Get story's gallery images with all sizes (no joins needed)
+db.StoryGallery.find({
+  storyId: ObjectId("story_id"),
+  moderation: "approved"
+})
+.sort({ "display.sortOrder": 1 })
+.select({
+  galleryImageId: 1,
+  name: 1,
+  caption: 1,
+  "urls.large": 1,
+  "urls.thumbnail": 1,
+  display: 1
+});
+
+// Get story's featured image for preview
+db.StoryGallery.findOne({
+  storyId: ObjectId("story_id"),
+  "display.isFeatured": true,
+  moderation: "approved"
+})
+.select({
+  galleryImageId: 1,
+  name: 1,
+  "urls.medium": 1,
+  "urls.thumbnail": 1
+});
+
+// Get images for story preview carousel
+db.StoryGallery.find({
+  storyId: ObjectId("story_id"),
+  "display.showInPreview": true,
+  moderation: "approved"
+})
+.sort({ "display.sortOrder": 1 })
+.limit(5)
+.select({
+  galleryImageId: 1,
+  "urls.thumbnail": 1,
+  caption: 1
+});
+
+// Update gallery image analytics
+db.StoryGallery.updateOne(
+  { galleryImageId: "gallery_123" },
+  {
+    $inc: { "analytics.viewCount": 1 },
+    $set: { "analytics.lastViewedAt": new Date() }
+  }
+);
+
+// Batch update gallery order
+const updates = [
+  { filter: { galleryImageId: "img1" }, update: { $set: { "display.sortOrder": 1 } } },
+  { filter: { galleryImageId: "img2" }, update: { $set: { "display.sortOrder": 2 } } },
+  { filter: { galleryImageId: "img3" }, update: { $set: { "display.sortOrder": 3 } } }
+];
+
+updates.forEach(({ filter, update }) => {
+  db.StoryGallery.updateOne(filter, update);
+});
+```
+
+**URL Generation Strategy**:
+```javascript
+// When creating a gallery image, generate all sizes
+const createGalleryImage = async (storyId, assetId, imageInfo) => {
+  // Generate different image sizes
+  const sizes = await generateImageSizes(assetId);
+
+  const galleryImage = {
+    galleryImageId: `gallery_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    storyId,
+    assetId,
+    name: imageInfo.name,
+    caption: imageInfo.caption,
+    urls: {
+      original: sizes.original.url,
+      large: sizes.large.url,
+      medium: sizes.medium.url,
+      thumbnail: sizes.thumbnail.url,
+      small: sizes.small.url
+    },
+    metadata: {
+      width: sizes.original.width,
+      height: sizes.original.height,
+      fileSize: sizes.original.fileSize,
+      mimeType: 'image/jpeg',
+      aspectRatio: calculateAspectRatio(sizes.original)
+    },
+    display: {
+      sortOrder: await getNextSortOrder(storyId),
+      isFeatured: false,
+      isHidden: false,
+      showInPreview: true
+    },
+    moderation: {
+      status: 'pending'
+    },
+    createdAt: new Date()
+  };
+
+  return await db.StoryGallery.create(galleryImage);
+};
+```
+
+---
+
+### 10. Genres Collection
 
 **Purpose**: Story genre classifications with Thai language support
 
@@ -951,7 +1199,7 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 9. Achievements Collection
+### 11. Achievements Collection
 
 **Purpose**: System-wide achievement definitions and rewards
 
@@ -997,7 +1245,7 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 10. Avatars Collection
+### 12. Avatars Collection
 
 **Purpose**: User avatar definitions with unlock conditions
 
@@ -1049,7 +1297,7 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 11. CreditTransactions Collection
+### 13. CreditTransactions Collection
 
 **Purpose**: Credit transaction history and economy tracking
 
@@ -1088,7 +1336,7 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 12. Reviews Collection
+### 14. Reviews Collection
 
 **Purpose**: User reviews with voting and moderation
 
@@ -1136,7 +1384,7 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 13. ReviewVotes Collection
+### 15. ReviewVotes Collection
 
 **Purpose**: Review voting system with duplicate prevention
 
@@ -1157,7 +1405,7 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 14. ReviewFlags Collection
+### 16. ReviewFlags Collection
 
 **Purpose**: Community review reporting and moderation
 
@@ -1183,7 +1431,7 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 15. StoryFlags Collection
+### 17. StoryFlags Collection
 
 **Purpose**: Story content reporting and moderation
 
@@ -1209,7 +1457,7 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 16. AdminAccounts Collection
+### 18. AdminAccounts Collection
 
 **Purpose**: Administrator account management with OAuth support
 
@@ -1265,7 +1513,7 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 17. AdminLoginHistory Collection
+### 19. AdminLoginHistory Collection
 
 **Purpose**: Admin login tracking and security monitoring
 
@@ -1304,7 +1552,7 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 18. AdminLogs Collection
+### 20. AdminLogs Collection
 
 **Purpose**: Admin action audit trail
 
@@ -1341,7 +1589,7 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 19. SecurityEvents Collection
+### 21. SecurityEvents Collection
 
 **Purpose**: Security monitoring and automatic threat detection
 
@@ -1381,7 +1629,7 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 20. UserSessions Collection
+### 22. UserSessions Collection
 
 **Purpose**: User session management with OAuth support
 
@@ -1417,7 +1665,7 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 21. OTPCodes Collection
+### 23. OTPCodes Collection
 
 **Purpose**: OTP verification with rate limiting and security
 
@@ -1452,7 +1700,7 @@ const gameSettings = await db.SystemConfig.find(
 
 ---
 
-### 22. Analytics Collection
+### 24. Analytics Collection
 
 **Purpose**: User behavior analytics with automatic cleanup
 

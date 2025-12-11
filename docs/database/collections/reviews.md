@@ -1,0 +1,457 @@
+# Reviews Collection
+
+**Purpose**: User reviews with voting and moderation
+
+## Schema
+
+```javascript
+{
+  _id: ObjectId,
+  userId: ObjectId,           // references Users
+  storyId: ObjectId,          // references Stories
+  rating: Number,             // 1-5
+  reviewText: String,
+  upVotes: Number,
+  downVotes: Number,
+  isSpoiler: Boolean,
+
+  // Soft Delete Support
+  deletedAt: Date,
+  deletedBy: ObjectId,
+  deleteReason: String,
+
+  adminReply: {
+    text: String,
+    adminId: ObjectId,         // references Users (admin)
+    repliedAt: Date
+  },
+
+  moderation: {
+    status: String,           // 'approved' | 'pending' | 'rejected' | 'flagged'
+    flaggedCount: Number,
+    moderatedBy: ObjectId,
+    moderatedAt: Date,
+    reason: String
+  },
+
+  createdAt: Date,
+  updatedAt: Date
+}
+```
+
+## Key Indexes
+
+- `userId` + `storyId` (unique)
+- `storyId` + `rating`
+- `storyId` + `createdAt`
+- `deletedAt` (sparse)
+- `moderation.status`
+
+## Query Examples
+
+```javascript
+// Get story reviews with pagination
+db.Reviews.find({
+  storyId: ObjectId("story_id"),
+  moderation: "approved",
+  deletedAt: null
+})
+.sort({ createdAt: -1 })
+.skip(20)
+.limit(10);
+
+// Get user's reviews
+db.Reviews.find({
+  userId: ObjectId("user_id"),
+  deletedAt: null
+})
+.sort({ createdAt: -1 });
+
+// Get story statistics
+db.Reviews.aggregate([
+  { $match: {
+    storyId: ObjectId("story_id"),
+    moderation: "approved",
+    deletedAt: null
+  }},
+  { $group: {
+    _id: null,
+    totalReviews: { $sum: 1 },
+    averageRating: { $avg: "$rating" },
+    ratingDistribution: {
+      $push: {
+        rating: "$rating",
+        count: 1
+      }
+    }
+  }},
+  { $project: {
+    totalReviews: 1,
+    averageRating: { $round: ["$averageRating", 2] },
+    ratingBreakdown: {
+      $arrayToObject: {
+        $map: {
+          input: { $setUnion: ["$ratingDistribution.rating", []] },
+          as: "rating",
+          in: {
+            k: "$$rating",
+            v: {
+              $size: {
+                $filter: {
+                  input: "$ratingDistribution",
+                  cond: { $eq: ["$$this.rating", "$$rating"] }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }}
+]);
+
+// Update story rating in Stories collection
+const updateStoryRating = async (storyId) => {
+  const stats = await db.Reviews.aggregate([
+    { $match: {
+      storyId,
+      moderation: "approved",
+      deletedAt: null
+    }},
+    { $group: {
+      _id: null,
+      averageRating: { $avg: "$rating" },
+      totalRatings: { $sum: 1 }
+    }}
+  ]).toArray();
+
+  const { averageRating = 0, totalRatings = 0 } = stats[0] || {};
+
+  return db.Stories.updateOne(
+    { _id: storyId },
+    {
+      $set: {
+        "stats.averageRating": Math.round(averageRating * 100) / 100,
+        "stats.totalRatings": totalRatings,
+        updatedAt: new Date()
+      }
+    }
+  );
+};
+
+// Create new review
+db.Reviews.insertOne({
+  userId: ObjectId("user_id"),
+  storyId: ObjectId("story_id"),
+  rating: 4,
+  reviewText: "เรื่องน่าสนใจมาก ตัวละครน่าค้นหา",
+  upVotes: 0,
+  downVotes: 0,
+  isSpoiler: false,
+  moderation: {
+    status: "pending",
+    flaggedCount: 0
+  },
+  createdAt: new Date(),
+  updatedAt: new Date()
+});
+
+// Update review votes
+db.Reviews.updateOne(
+  { _id: ObjectId("review_id") },
+  {
+    $inc: { upVotes: 1 },
+    $set: { updatedAt: new Date() }
+  }
+);
+
+// Check if user has already reviewed story
+db.Reviews.findOne({
+  userId: ObjectId("user_id"),
+  storyId: ObjectId("story_id"),
+  deletedAt: null
+});
+
+// Get reviews with spoiler warnings
+db.Reviews.find({
+  storyId: ObjectId("story_id"),
+  isSpoiler: true,
+  moderation: "approved"
+})
+.select({
+  rating: 1,
+  reviewText: 1,
+  createdAt: 1
+});
+
+// Auto-approve reviews based on criteria
+db.Reviews.updateMany(
+  {
+    moderation: "pending",
+    createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }, // Recent
+    reviewText: { $regex: /^[\s\S]{1,500}$/ }, // Reasonable length
+    rating: { $gte: 1, $lte: 5 }
+  },
+  {
+    $set: {
+      "moderation.status": "approved",
+      "moderation.moderatedAt": new Date(),
+      "moderation.moderatedBy": ObjectId("auto_system"),
+      "moderation.reason": "Auto-approved - meets criteria"
+    }
+  }
+);
+
+// Get flagged reviews for moderation
+db.Reviews.find({
+  "moderation.status": "flagged",
+  "moderation.flaggedCount": { $gte: 3 }
+})
+.sort({ "moderation.flaggedCount": -1 })
+.limit(50);
+
+// Reject review with reason
+db.Reviews.updateOne(
+  { _id: ObjectId("review_id") },
+  {
+    $set: {
+      "moderation.status": "rejected",
+      "moderation.moderatedBy": ObjectId("admin_id"),
+      "moderation.moderatedAt": new Date(),
+      "moderation.reason": "Contains inappropriate language",
+      updatedAt: new Date()
+    }
+  }
+);
+
+// Add admin reply
+db.Reviews.updateOne(
+  { _id: ObjectId("review_id") },
+  {
+    $set: {
+      "adminReply": {
+        text: "ขอบคุณความเห็นที่มีประโยชน์ครับ",
+        adminId: ObjectId("admin_id"),
+        repliedAt: new Date()
+      },
+      updatedAt: new Date()
+    }
+  }
+);
+
+// Get review analytics for story
+db.Reviews.aggregate([
+  { $match: {
+    storyId: ObjectId("story_id"),
+    moderation: "approved",
+    deletedAt: null,
+    createdAt: {
+      $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
+    }
+  }},
+  { $group: {
+    _id: {
+      date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+      rating: "$rating"
+    },
+    count: { $sum: 1 }
+  }},
+  { $group: {
+    _id: "$_id.date",
+    ratings: {
+      $push: {
+        rating: "$_id.rating",
+        count: "$count"
+      }
+    },
+    totalReviews: { $sum: "$count" }
+  }},
+  { $sort: { "_id": 1 } }
+]);
+
+// Soft delete review
+db.Reviews.updateOne(
+  { _id: ObjectId("review_id") },
+  {
+    $set: {
+      deletedAt: new Date(),
+      deletedBy: ObjectId("user_id"),
+      deleteReason: "User requested deletion",
+      updatedAt: new Date()
+    }
+  }
+);
+
+// Get user review statistics
+db.Reviews.aggregate([
+  { $match: {
+    userId: ObjectId("user_id"),
+    deletedAt: null
+  }},
+  { $group: {
+    _id: null,
+    totalReviews: { $sum: 1 },
+    averageRating: { $avg: "$rating" },
+    totalUpVotes: { $sum: "$upVotes" },
+    totalDownVotes: { $sum: "$downVotes" },
+    withAdminReply: {
+      $sum: { $cond: [{ $gt: ["$adminReply.repliedAt", null] }, 1, 0] }
+    }
+  }},
+  { $project: {
+    totalReviews: 1,
+    averageRating: { $round: ["$averageRating", 2] },
+    totalUpVotes: 1,
+    totalDownVotes: 1,
+    voteRatio: {
+      $cond: [
+        { $eq: [{ $add: ["$totalUpVotes", "$totalDownVotes"] }, 0] },
+        0,
+        { $round: [
+          { $multiply: [
+            { $divide: ["$totalUpVotes", { $add: ["$totalUpVotes", "$totalDownVotes"] }] },
+            100
+          ]},
+          2
+        ]}
+      ]
+    },
+    withAdminReply: 1
+  }}
+]);
+
+// Get reviews with specific text patterns (moderation)
+db.Reviews.find({
+  reviewText: {
+    $regex: /(spam|inappropriate|harassment)/i,
+    $options: "i"
+  },
+  moderation: { $ne: "rejected" }
+});
+```
+
+## Rating System
+
+### Scale
+- **5 stars**: Excellent - Highly recommended
+- **4 stars**: Good - Worth reading
+- **3 stars**: Average - Mixed feelings
+- **2 stars**: Poor - Not recommended
+- **1 star**: Bad - Avoid
+
+### Rating Guidelines
+- Reviews should be constructive
+- Ratings should reflect story quality
+- Spoiler content should be marked
+
+## Moderation Workflow
+
+### Status Flow
+
+1. **pending** → New review awaiting approval
+2. **approved** → Publicly visible
+3. **flagged** → Reported by users, needs review
+4. **rejected** → Removed from public view
+
+### Auto-Moderation Rules
+
+```javascript
+// Auto-flag suspicious reviews
+const autoFlagReviews = () => {
+  const suspiciousPatterns = [
+    { pattern: /^.{0,10}$/, reason: "Too short" },
+    { pattern: /(spam|advertisement)/i, reason: "Possible spam" },
+    { pattern: /(.)\1{10,}/, reason: "Excessive repetition" }
+  ];
+
+  suspiciousPatterns.forEach(({ pattern, reason }) => {
+    db.Reviews.updateMany(
+      {
+        moderation: "approved",
+        reviewText: { $regex: pattern }
+      },
+      {
+        $set: {
+          "moderation.status": "flagged",
+          "moderation.reason": reason,
+          updatedAt: new Date()
+        }
+      }
+    );
+  });
+};
+```
+
+## Review Quality Metrics
+
+### Helpful Votes
+- Upvotes indicate helpful reviews
+- Downvotes indicate poor quality
+- Vote ratio determines review prominence
+
+### Engagement Metrics
+```javascript
+const getReviewEngagement = (reviewId) => {
+  return db.Reviews.aggregate([
+    { $match: { _id: reviewId } },
+    { $lookup: {
+      from: "ReviewVotes",
+      localField: "_id",
+      foreignField: "reviewId",
+      as: "votes"
+    }},
+    { $project: {
+      upVotes: 1,
+      downVotes: 1,
+      totalVotes: { $size: "$votes" },
+      uniqueVoters: { $size: { $addToSet: "$votes.userId" } },
+      voteRatio: {
+        $cond: [
+          { $eq: [{ $add: ["$upVotes", "$downVotes"] }, 0] },
+          0,
+          { $divide: ["$upVotes", { $add: ["$upVotes", "$downVotes"] }] }
+        ]
+      }
+    }}
+  ]);
+};
+```
+
+## Integration Points
+
+- **Stories**: Rating updates via `storyId`
+- **Users**: Review ownership and statistics
+- **ReviewVotes**: Voting system integration
+- **ReviewFlags**: Community moderation
+- **AdminLogs**: Admin actions tracking
+
+## Performance Optimization
+
+### Efficient Rating Updates
+```javascript
+// Batch update story ratings
+const batchUpdateRatings = async () => {
+  const stories = await db.Stories.find({}).toArray();
+
+  for (const story of stories) {
+    await updateStoryRating(story._id);
+  }
+};
+```
+
+### Review Caching
+- Cache approved reviews in memory
+- Update cache on rating changes
+- Invalidate cache on moderation
+
+## User Experience
+
+### Review Guidelines Display
+- Character limits
+- Community standards
+- Spoiler warnings
+
+### Review Responses
+- Author can respond to reviews
+- Admin replies for moderation
+- Community interaction features
