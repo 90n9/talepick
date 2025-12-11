@@ -1,0 +1,94 @@
+# TalePick Project Specific Gitignore
+# Add these patterns to your global gitignore or include them in the project
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+!config/.env.example
+
+# Database
+data/
+db/
+*.sqlite
+*.sqlite3
+*.db
+
+# Docker volumes
+docker-data/
+volumes/
+
+# MongoDB data
+mongo_data/
+
+# AI/ML model files (often large)
+*.pkl
+*.pickle
+*.model
+*.h5
+*.hdf5
+*.pb
+
+# Media assets (consider using CDN instead)
+uploads/
+static/media/
+public/assets/*
+!public/assets/.gitkeep
+
+# Performance monitoring
+.performance/
+*.prof
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Test artifacts
+test-results/
+playwright-report/
+test-results.xml
+
+# Storybook / Design system
+storybook-static/
+
+# Package manager locks (if you prefer not to commit them)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Husky (can be committed, but optional)
+# .husky/
+
+# Local configuration overrides
+config/local.json
+config/development.local.json
+config/production.local.json
+
+# Firebase
+.firebase/
+firebase-debug.log
+.firebase-debug.*.log
+
+# AWS
+.aws/
+
+# Google Cloud
+.gcloud/
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Kubernetes
+*.kubeconfig
+
+# Analytics and tracking
+analytics/
+tracking/
+
+# Monitoring
+monitoring/
+metrics/
