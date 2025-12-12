@@ -283,7 +283,6 @@ const StorySchema: Schema = new Schema(
   },
   {
     timestamps: true,
-    collection: 'stories',
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }

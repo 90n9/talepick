@@ -39,7 +39,7 @@ const reviewVoteSchema = new Schema<IReviewVote>(
   },
   {
     timestamps: false, // We use our own createdAt field
-    collection: 'ReviewVotes',
+    collection: 'review_votes',
   }
 );
 
@@ -163,7 +163,7 @@ reviewVoteSchema.statics.getTopVotedReviews = function (daysBack: number = 7, li
     { $limit: limit },
     {
       $lookup: {
-        from: 'Reviews',
+        from: 'reviews',
         localField: '_id',
         foreignField: '_id',
         as: 'review',

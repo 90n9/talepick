@@ -209,7 +209,7 @@ const adminAccountSchema = new Schema<IAdminAccount>(
   },
   {
     timestamps: true,
-    collection: 'AdminAccounts',
+    collection: 'admin_accounts',
   }
 );
 

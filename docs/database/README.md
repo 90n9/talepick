@@ -20,6 +20,16 @@
 
 ---
 
+## 📋 Database Naming Convention
+
+**Important**: All MongoDB collections in this project follow the `lowercase_with_underscores` naming convention.
+
+- **Standard Format**: `collection_names` (lowercase, plural, underscores)
+- **Reference**: See [MongoDB Naming Convention Guide](./MONGODB_NAMING_CONVENTION.md)
+- **Examples**: `users`, `user_favorites`, `admin_accounts`, `story_nodes`
+
+---
+
 ## 📊 Database Architecture
 
 ### Total Collections: 24

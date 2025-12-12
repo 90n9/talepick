@@ -219,7 +219,7 @@ const StoryGallerySchema: Schema = new Schema(
   },
   {
     timestamps: true,
-    collection: 'storyGallery',
+    collection: 'story_gallery',
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }

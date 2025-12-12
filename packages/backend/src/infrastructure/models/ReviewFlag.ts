@@ -73,7 +73,7 @@ const reviewFlagSchema = new Schema<IReviewFlag>(
   },
   {
     timestamps: false, // We use our own createdAt field
-    collection: 'ReviewFlags',
+    collection: 'review_flags',
   }
 );
 
@@ -273,7 +273,7 @@ reviewFlagSchema.statics.getTopFlaggedReviews = function (
     { $limit: limit },
     {
       $lookup: {
-        from: 'Reviews',
+        from: 'reviews',
         localField: '_id',
         foreignField: '_id',
         as: 'review',

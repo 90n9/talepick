@@ -160,7 +160,6 @@ const AvatarSchema: Schema = new Schema(
   },
   {
     timestamps: true,
-    collection: 'avatars',
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }

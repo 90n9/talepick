@@ -129,7 +129,7 @@ const otpCodeSchema = new Schema<IOtpCode>(
   },
   {
     timestamps: false, // We use our own timestamp fields
-    collection: 'OTPCodes',
+    collection: 'otp_codes',
   }
 );
 

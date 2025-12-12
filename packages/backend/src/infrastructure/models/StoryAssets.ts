@@ -250,7 +250,7 @@ const StoryAssetsSchema: Schema = new Schema(
   },
   {
     timestamps: true,
-    collection: 'storyAssets',
+    collection: 'story_assets',
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }

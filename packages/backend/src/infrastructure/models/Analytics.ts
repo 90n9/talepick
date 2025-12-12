@@ -203,7 +203,6 @@ const analyticsSchema = new Schema<IAnalytics>(
   },
   {
     timestamps: false, // We use our own timestamp fields
-    collection: 'Analytics',
   }
 );
 

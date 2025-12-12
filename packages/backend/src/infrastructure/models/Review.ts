@@ -127,7 +127,6 @@ const ReviewSchema: Schema = new Schema(
   },
   {
     timestamps: true,
-    collection: 'reviews',
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }

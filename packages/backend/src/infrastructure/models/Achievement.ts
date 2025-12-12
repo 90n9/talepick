@@ -165,7 +165,6 @@ const AchievementSchema: Schema = new Schema(
   },
   {
     timestamps: true,
-    collection: 'achievements',
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }

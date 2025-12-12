@@ -31,7 +31,7 @@ const UserFavoritesSchema: Schema = new Schema(
   },
   {
     timestamps: true,
-    collection: 'userFavorites',
+    collection: 'user_favorites',
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }
@@ -86,7 +86,7 @@ UserFavoritesSchema.statics.getUserFavorites = function (
       { $limit: limit },
       {
         $lookup: {
-          from: 'Stories',
+          from: 'stories',
           localField: 'storyId',
           foreignField: '_id',
           as: 'story',
@@ -118,7 +118,7 @@ UserFavoritesSchema.statics.getUserFavoritesWithProgress = function (userId: Typ
     { $match: { userId } },
     {
       $lookup: {
-        from: 'Stories',
+        from: 'stories',
         localField: 'storyId',
         foreignField: '_id',
         as: 'story',
@@ -127,7 +127,7 @@ UserFavoritesSchema.statics.getUserFavoritesWithProgress = function (userId: Typ
     { $unwind: '$story' },
     {
       $lookup: {
-        from: 'UserStoryProgress',
+        from: 'user_story_progress',
         localField: 'storyId',
         foreignField: 'storyId',
         let: { userId: '$userId' },
@@ -176,7 +176,7 @@ UserFavoritesSchema.statics.getUserFavoritesByGenre = function (
     { $match: { userId } },
     {
       $lookup: {
-        from: 'Stories',
+        from: 'stories',
         localField: 'storyId',
         foreignField: '_id',
         as: 'story',
@@ -220,7 +220,7 @@ UserFavoritesSchema.statics.getMostFavoritedStories = function (
     { $limit: limit },
     {
       $lookup: {
-        from: 'Stories',
+        from: 'stories',
         localField: '_id',
         foreignField: '_id',
         as: 'story',
@@ -253,7 +253,7 @@ UserFavoritesSchema.statics.getUserFavoriteStatistics = function (userId: Types.
     { $match: { userId } },
     {
       $lookup: {
-        from: 'Stories',
+        from: 'stories',
         localField: 'storyId',
         foreignField: '_id',
         as: 'story',
@@ -280,7 +280,7 @@ UserFavoritesSchema.statics.getUserFavoriteStatistics = function (userId: Types.
         newestFavorite: 1,
         oldestFavorite: 1,
         favoriteAgeDays: {
-          $divide: [{ $subtract: [new Date(), '$oldestFavorite'] }, 1000 * 60 * 60 * 24],
+          $divide: [{ $subtract: ['$$NOW', '$oldestFavorite'] }, 1000 * 60 * 60 * 24],
         },
         totalRatings: 1,
       },
@@ -298,7 +298,7 @@ UserFavoritesSchema.statics.getRecentlyFavoritedStories = function (
     { $limit: limit },
     {
       $lookup: {
-        from: 'Stories',
+        from: 'stories',
         localField: 'storyId',
         foreignField: '_id',
         as: 'story',

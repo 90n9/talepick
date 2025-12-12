@@ -10,7 +10,7 @@
 
 **Milestone 1.1 Tasks**:
 - [x] Set up development Docker containers
-- [ ] Configure MongoDB with initial schemas
+- [ ] Configure MongoDB with initial schemas (25 collections using `lowercase_with_underscores` naming convention)
 - [x] Set up Next.js monorepo with workspaces
 - [x] Configure TypeScript and linting
 - [ ] Set up testing framework (Vitest)
@@ -241,51 +241,102 @@ export default connectDB;
 **Estimated Time**: 8-10 hours
 **Priority**: Critical
 
-**Directory Structure** (mirrors `docs/database/collections`):
+**Directory Structure** (⚠️ *Some files need renaming to follow singular model naming convention*):
 ```bash
 packages/backend/src/infrastructure/models/
 ├── Achievement.ts
+├── AdminAccount.ts
+├── AdminLog.ts
+├── AdminLoginHistory.ts
+├── Analytics.ts
 ├── Avatar.ts
 ├── CreditTransaction.ts
 ├── Genre.ts
+├── OtpCode.ts
 ├── Review.ts
+├── ReviewFlag.ts
+├── ReviewVote.ts
+├── SecurityEvent.ts
 ├── Story.ts
-├── StoryAsset.ts
+├── StoryAssets.ts
+├── StoryFlag.ts
 ├── StoryGallery.ts
 ├── StoryNode.ts
+├── SystemConfig.ts
 ├── User.ts
-├── UserAchievement.ts
-├── UserAvatar.ts
-├── UserFavorite.ts
+├── UserAchievement.ts              # ⚠️ Currently: UserAchievements.ts (needs rename)
+├── UserAvatar.ts                   # ⚠️ Currently: UserAvatars.ts (needs rename)
+├── UserFavorite.ts                 # ⚠️ Currently: UserFavorites.ts (needs rename)
+├── UserSession.ts                  # ⚠️ Currently: UserSessions.ts (needs rename)
 ├── UserStoryProgress.ts
 └── index.ts
 ```
 
 **Implementation Order** (use only fields and indexes from `docs/database/collections/*.md`):
 
-1. **Users** (`User.ts`)
-2. **Genres** (`Genre.ts`)
-3. **Stories** (`Story.ts`)
-4. **StoryNodes** (`StoryNode.ts`)
-5. **StoryAssets** (`StoryAsset.ts`)
-6. **StoryGallery** (`StoryGallery.ts`)
-7. **Reviews** (`Review.ts`)
-8. **Achievements** (`Achievement.ts`)
-9. **Avatars** (`Avatar.ts`)
-10. **CreditTransactions** (`CreditTransaction.ts`)
-11. **UserAchievements** (`UserAchievement.ts`)
-12. **UserAvatars** (`UserAvatar.ts`)
-13. **UserFavorites** (`UserFavorite.ts`)
-14. **UserStoryProgress** (`UserStoryProgress.ts`)
+### Single-Word Models (Auto-Generated Collections)
+**Core Collections**:
+1. **User** (`User.ts`) - auto collection: `users`
+2. **Genre** (`Genre.ts`) - auto collection: `genres`
+3. **Story** (`Story.ts`) - auto collection: `stories`
+4. **Review** (`Review.ts`) - auto collection: `reviews`
 
-**Example: User Model Implementation (fields taken only from `docs/database/collections/USERS.md`)**:
+**System Collections**:
+5. **Achievement** (`Achievement.ts`) - auto collection: `achievements`
+6. **Avatar** (`Avatar.ts`) - auto collection: `avatars`
+7. **Analytics** (`Analytics.ts`) - auto collection: `analytics`
+
+### Multi-Word Models (Manual `lowercase_with_underscores` Collections)
+**Story System Collections**:
+8. **StoryNode** (`StoryNode.ts`) - collection: `story_nodes`
+9. **StoryAssets** (`StoryAssets.ts`) - collection: `story_assets`
+10. **StoryGallery** (`StoryGallery.ts`) - collection: `story_gallery`
+
+**Transaction Collections**:
+11. **CreditTransaction** (`CreditTransaction.ts`) - collection: `credit_transactions`
+
+**User-Related Collections**:
+12. **UserAchievement** (`UserAchievement.ts`) ⚠️ *Currently: UserAchievements.ts* - collection: `user_achievements`
+13. **UserAvatar** (`UserAvatar.ts`) ⚠️ *Currently: UserAvatars.ts* - collection: `user_avatars`
+14. **UserFavorite** (`UserFavorite.ts`) ⚠️ *Currently: UserFavorites.ts* - collection: `user_favorites`
+15. **UserStoryProgress** (`UserStoryProgress.ts`) - collection: `user_story_progress`
+16. **UserSession** (`UserSession.ts`) ⚠️ *Currently: UserSessions.ts* - collection: `user_sessions`
+
+**Admin & Security Collections**:
+17. **AdminAccount** (`AdminAccount.ts`) - collection: `admin_accounts`
+18. **AdminLog** (`AdminLog.ts`) - collection: `admin_logs`
+19. **AdminLoginHistory** (`AdminLoginHistory.ts`) - collection: `admin_login_history`
+20. **SecurityEvent** (`SecurityEvent.ts`) - collection: `security_events`
+21. **OtpCode** (`OtpCode.ts`) - collection: `otp_codes`
+
+**Review System Collections**:
+22. **ReviewFlag** (`ReviewFlag.ts`) - collection: `review_flags`
+23. **ReviewVote** (`ReviewVote.ts`) - collection: `review_votes`
+24. **StoryFlag** (`StoryFlag.ts`) - collection: `story_flags`
+
+**System Configuration Collections**:
+25. **SystemConfig** (`SystemConfig.ts`) - collection: `system_config`
+
+**Naming Convention Rule**:
+- **Single-word models**: Use Mongoose auto-generation (no `collection` property needed)
+- **Multi-word models**: Specify `collection` property with `lowercase_with_underscores` format
+- **See**: `docs/database/MONGODB_NAMING_CONVENTION.md` for complete guidance
+
+**Important**: Follow the naming convention rule:
+- **Single-word models**: Let Mongoose auto-generate (e.g., `User` → `users`)
+- **Multi-word models**: Use `lowercase_with_underscores` (e.g., `UserAchievements` → `user_achievements`)
+- See `docs/database/MONGODB_NAMING_CONVENTION.md` for complete guidance
+
+**Example: Single-Word Model Implementation** (from `docs/database/collections/USERS.md`):
+
 ```typescript
+// Single-word model: "User" → Mongoose auto-generates "users" collection
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IUser extends Document {
   email: string;
   username: string;
-  passwordHash?: string; // optional for OAuth
+  passwordHash?: string;
   profile: {
     displayName: string;
     avatar: { type: 'default' | 'custom' | 'google'; value: string };
@@ -374,7 +425,13 @@ const UserSchema: Schema = new Schema(
     deletedBy: { type: Schema.Types.ObjectId },
     deleteReason: { type: String },
   },
-  { versionKey: false }
+  {
+    versionKey: false,
+    // Single-word model: No collection specified (Mongoose auto-generates 'users')
+    timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 );
 
 UserSchema.index({ email: 1 }, { unique: true });
@@ -384,7 +441,43 @@ UserSchema.index({ 'accountStatus.status': 1 });
 UserSchema.index({ deletedAt: 1 }, { sparse: true });
 
 export default mongoose.model<IUser>('User', UserSchema);
+// Result: Collection name = 'users' (auto-generated by Mongoose)
 ```
+
+**Example: Multi-Word Model Implementation**:
+
+```typescript
+// Multi-word model: "UserAchievement" (singular) → Manual collection "user_achievements" (plural)
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IUserAchievement extends Document {
+  userId: mongoose.Types.ObjectId;
+  achievementId: string;
+  progress: number;
+  unlockedAt?: Date;
+  isCompleted: boolean;
+}
+
+const UserAchievementSchema = new Schema<IUserAchievement>({
+  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+  achievementId: { type: String, required: true, index: true },
+  progress: { type: Number, default: 0, min: 0, max: 100 },
+  unlockedAt: { type: Date },
+  isCompleted: { type: Boolean, default: false, index: true },
+}, {
+  timestamps: true,
+  collection: 'user_achievements',  // Two words = use underscores format
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true },
+});
+
+UserAchievementSchema.index({ userId: 1, achievementId: 1 }, { unique: true });
+
+export default mongoose.model<IUserAchievement>('UserAchievement', UserAchievementSchema);
+// Result: Collection name = 'user_achievements' (manual specification)
+```
+
+**⚠️ Important Note**: The model file should be named `UserAchievement.ts` (singular), not `UserAchievements.ts` (plural). Some existing files use incorrect plural naming and need to be renamed.
 
 **Verification**: Create test script to verify each model against the documented collections
 
@@ -396,20 +489,44 @@ export default mongoose.model<IUser>('User', UserSchema);
 
 **Create `packages/backend/src/infrastructure/models/index.ts`**:
 ```typescript
+// Core Collections
+export { default as User } from './User';
+export { default as Genre } from './Genre';
+export { default as Story } from './Story';
+export { default as StoryNode } from './StoryNode';
+export { default as StoryAssets } from './StoryAssets';
+export { default as StoryGallery } from './StoryGallery';
+export { default as Review } from './Review';
+
+// System Collections
 export { default as Achievement } from './Achievement';
 export { default as Avatar } from './Avatar';
 export { default as CreditTransaction } from './CreditTransaction';
-export { default as Genre } from './Genre';
-export { default as Review } from './Review';
-export { default as Story } from './Story';
-export { default as StoryAsset } from './StoryAsset';
-export { default as StoryGallery } from './StoryGallery';
-export { default as StoryNode } from './StoryNode';
-export { default as User } from './User';
-export { default as UserAchievement } from './UserAchievement';
-export { default as UserAvatar } from './UserAvatar';
-export { default as UserFavorite } from './UserFavorite';
+
+// User-Related Collections (⚠️ File names need updating to singular form)
+export { default as UserAchievement } from './UserAchievement';      // Currently: UserAchievements.ts
+export { default as UserAvatar } from './UserAvatar';                // Currently: UserAvatars.ts
+export { default as UserFavorite } from './UserFavorite';            // Currently: UserFavorites.ts
 export { default as UserStoryProgress } from './UserStoryProgress';
+export { default as UserSession } from './UserSession';              // Currently: UserSessions.ts
+
+// Admin & Security Collections
+export { default as AdminAccount } from './AdminAccount';
+export { default as AdminLog } from './AdminLog';
+export { default as AdminLoginHistory } from './AdminLoginHistory';
+export { default as SecurityEvent } from './SecurityEvent';
+export { default as OtpCode } from './OtpCode';
+
+// Review System Collections
+export { default as ReviewFlag } from './ReviewFlag';
+export { default as ReviewVote } from './ReviewVote';
+export { default as StoryFlag } from './StoryFlag';
+
+// System Collections
+export { default as Analytics } from './Analytics';
+export { default as SystemConfig } from './SystemConfig';
+
+// Database connection
 export { default as connectDB } from '../database/connection';
 ```
 

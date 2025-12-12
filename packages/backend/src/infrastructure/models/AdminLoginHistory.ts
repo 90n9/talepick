@@ -107,7 +107,7 @@ const adminLoginHistorySchema = new Schema<IAdminLoginHistory>(
   },
   {
     timestamps: { createdAt: true, updatedAt: false },
-    collection: 'AdminLoginHistory',
+    collection: 'admin_login_history',
   }
 );
 
@@ -239,7 +239,7 @@ adminLoginHistorySchema.statics.getGeographicPatterns = function (daysBack: numb
     { $sort: { totalLogins: -1 } },
     {
       $lookup: {
-        from: 'AdminAccounts',
+        from: 'admin_accounts',
         localField: '_id',
         foreignField: '_id',
         as: 'admin',

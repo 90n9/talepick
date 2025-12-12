@@ -164,7 +164,7 @@ const securityEventSchema = new Schema<ISecurityEvent>(
   },
   {
     timestamps: false,
-    collection: 'SecurityEvents',
+    collection: 'security_events',
   }
 );
 

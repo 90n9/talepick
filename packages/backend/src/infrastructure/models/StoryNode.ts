@@ -85,8 +85,8 @@ export interface IStoryNode extends Document {
   editorMetadata?: IEditorMetadata;
 
   // Methods
-  recordVisit(): void;
-  recordChoice(choiceId: string): void;
+  recordVisit(): Promise<void>;
+  recordChoice(choiceId: string): Promise<void>;
 }
 
 const SegmentSchema = new Schema(
@@ -296,7 +296,7 @@ const StoryNodeSchema: Schema = new Schema(
     },
   },
   {
-    collection: 'storyNodes',
+    collection: 'story_nodes', // Manual override: StoryNode → storynodes (awkward) → story_nodes (better)
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }
@@ -309,15 +309,15 @@ StoryNodeSchema.index({ isEnding: 1 });
 StoryNodeSchema.index({ 'analytics.totalVisits': -1 });
 
 // Methods
-StoryNodeSchema.methods.recordVisit = function () {
+StoryNodeSchema.methods.recordVisit = function (): Promise<void> {
   if (!this.analytics) {
     this.analytics = { totalVisits: 0, choiceDistribution: [] };
   }
   this.analytics.totalVisits = (this.analytics.totalVisits || 0) + 1;
-  return this.save();
+  return this.save().then(() => undefined);
 };
 
-StoryNodeSchema.methods.recordChoice = function (choiceId: string) {
+StoryNodeSchema.methods.recordChoice = function (choiceId: string): Promise<void> {
   if (!this.analytics) {
     this.analytics = { totalVisits: 0, choiceDistribution: [] };
   }
@@ -338,7 +338,7 @@ StoryNodeSchema.methods.recordChoice = function (choiceId: string) {
     });
   }
 
-  return this.save();
+  return this.save().then(() => undefined);
 };
 
 // Static methods

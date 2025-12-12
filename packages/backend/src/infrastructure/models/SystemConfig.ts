@@ -108,7 +108,7 @@ const systemConfigSchema = new Schema<ISystemConfig>(
   },
   {
     timestamps: true,
-    collection: 'SystemConfig',
+    collection: 'system_config',
   }
 );
 

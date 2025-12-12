@@ -72,7 +72,7 @@ const storyFlagSchema = new Schema<IStoryFlag>(
   },
   {
     timestamps: false,
-    collection: 'StoryFlags',
+    collection: 'story_flags',
   }
 );
 
@@ -176,7 +176,7 @@ storyFlagSchema.statics.getStoriesWithMostReports = function (minReports = 3, li
     { $limit: limit },
     {
       $lookup: {
-        from: 'Stories',
+        from: 'stories',
         localField: '_id',
         foreignField: '_id',
         as: 'story',

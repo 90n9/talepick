@@ -208,7 +208,7 @@ const UserStoryProgressSchema: Schema = new Schema(
   },
   {
     timestamps: true,
-    collection: 'userStoryProgress',
+    collection: 'user_story_progress',
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }
@@ -311,7 +311,7 @@ UserStoryProgressSchema.statics.getCompletedStories = function (userId: Types.Ob
     { $match: { userId, hasCompleted: true } },
     {
       $lookup: {
-        from: 'Stories',
+        from: 'stories',
         localField: 'storyId',
         foreignField: '_id',
         as: 'story',

@@ -154,7 +154,7 @@ const adminLogSchema = new Schema<IAdminLog>(
   },
   {
     timestamps: false, // We use our own timestamp field
-    collection: 'AdminLogs',
+    collection: 'admin_logs',
   }
 );
 
@@ -251,7 +251,7 @@ adminLogSchema.statics.getDailyActivitySummary = function (daysBack: number = 1)
     { $sort: { '_id.date': -1, totalActions: -1 } },
     {
       $lookup: {
-        from: 'AdminAccounts',
+        from: 'admin_accounts',
         localField: '_id.adminId',
         foreignField: '_id',
         as: 'admin',
@@ -312,7 +312,7 @@ adminLogSchema.statics.getStoryStatusHistory = function () {
     },
     {
       $lookup: {
-        from: 'Stories',
+        from: 'stories',
         localField: '_id',
         foreignField: '_id',
         as: 'story',

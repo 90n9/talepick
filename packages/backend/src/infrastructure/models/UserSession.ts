@@ -154,7 +154,7 @@ const userSessionSchema = new Schema<IUserSession>(
   },
   {
     timestamps: false,
-    collection: 'UserSessions',
+    collection: 'user_sessions',
   }
 );
 

@@ -57,7 +57,6 @@ const GenreSchema: Schema = new Schema(
   },
   {
     timestamps: true,
-    collection: 'genres',
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }

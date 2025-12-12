@@ -154,7 +154,7 @@ const UserAvatarsSchema: Schema = new Schema(
   },
   {
     timestamps: true,
-    collection: 'userAvatars',
+    collection: 'user_avatars',
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }

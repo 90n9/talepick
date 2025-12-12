@@ -104,7 +104,7 @@ const CreditTransactionSchema: Schema = new Schema(
   },
   {
     timestamps: true,
-    collection: 'creditTransactions',
+    collection: 'credit_transactions',
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }

@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export interface IUser extends Document {
@@ -224,7 +224,6 @@ const UserSchema: Schema = new Schema(
   },
   {
     timestamps: true,
-    collection: 'users',
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
   }
