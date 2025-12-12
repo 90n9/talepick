@@ -1,18 +1,26 @@
 {
-  "name": "testing",
+  "name": "@talepick/testing",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "type": "module",
   "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "find . -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.jsx' | grep -q . && eslint . --ext .ts,.tsx,.js,.jsx || echo 'No files to lint'"
+    "lint": "find src -name '*.ts' 2>/dev/null | head -1 | xargs eslint 2>/dev/null || echo 'No TypeScript files to lint'"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Testing utilities, mocks, and factories for TalePick",
   "devDependencies": {
-    "@types/mongoose": "^5.11.96",
-    "mongoose": "^9.0.1",
+    "@eslint/js": "^9.39.1",
+    "@talepick/shared": "^1.0.0",
+    "@testing-library/jest-dom": "^6.5.0",
+    "@testing-library/react": "^16.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.49.0",
+    "@typescript-eslint/parser": "^8.49.0",
     "vitest": "^4.0.15"
   }
 }

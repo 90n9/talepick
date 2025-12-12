@@ -10,6 +10,22 @@ const nextConfig: NextConfig = {
   },
   // Enable standalone output for Docker
   output: 'standalone',
+  // Configure Turbopack to handle path aliases
+  turbopack: {
+    resolveAlias: {
+      '@lib': './app/lib',
+      '@ui': './app/ui',
+    },
+  },
+  webpack: (config) => {
+    // Add path alias resolution for webpack (fallback)
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@lib': './app/lib',
+      '@ui': './app/ui',
+    };
+    return config;
+  },
 };
 
 export default nextConfig;

@@ -15,12 +15,9 @@ TalePick is a Thai-language interactive story platform built as a monorepo with 
   - **Frontend App** (`/apps/frontend/`): Port 3000 - Main user application
   - **Admin App** (`/apps/admin/): Port 3001 - Admin dashboard
 - **Packages**:
-  - **Domain Layer** (`packages/domain/`): Business entities and rules
-  - **Application Layer** (`packages/application/`): Use cases and business logic
-  - **Infrastructure Layer** (`packages/infrastructure/`): Database and external services
-  - **Presentation Layer** (`packages/presentation/`): API controllers and middleware
-  - **Shared Layer** (`packages/shared/`): Types, utilities, constants
-  - **Testing Layer** (`packages/testing/`): Mocks, factories, test utilities
+  - **Backend Package** (`packages/backend/`): All business logic, database, and API layers
+  - **Shared Package** (`packages/shared/`): Types, constants, and utilities shared across apps
+  - **Testing Package** (`packages/testing/`): Mocks, factories, and test utilities
 - **Database**: MongoDB with 24 collections (see `docs/database/`)
   - Default credentials: `root` / `example`
 
@@ -39,22 +36,22 @@ TalePick is a Thai-language interactive story platform built as a monorepo with 
 For detailed folder structure and file organization, see **@FOLDER_STRUCTURE.md**. Key patterns:
 
 ```typescript
-// Domain Layer (Business rules, no external deps)
-packages/domain/entities/User.ts
-packages/domain/services/CreditService.ts
-packages/domain/repositories/IUserRepository.ts
+// Backend Package - All business logic consolidated
+packages/backend/src/domain/entities/User.ts
+packages/backend/src/domain/services/CreditService.ts
+packages/backend/src/application/use-cases/SpendCreditsUseCase.ts
+packages/backend/src/infrastructure/repositories/MongoUserRepository.ts
+packages/backend/src/presentation/controllers/stories/GetStoriesController.ts
 
-// Application Layer (Use cases, orchestrates domain)
-packages/application/use-cases/SpendCreditsUseCase.ts
-packages/application/services/UserAuthService.ts
+// Shared Package - Types and utilities
+packages/shared/src/types/user.ts
+packages/shared/src/types/story.ts
+packages/shared/src/constants/credits.ts
+packages/shared/src/utils/date.ts
 
-// Infrastructure Layer (Database, external APIs)
-packages/infrastructure/repositories/MongoUserRepository.ts
-packages/infrastructure/jwt/UserJWTService.ts
-
-// Presentation Layer (API controllers, middleware)
-packages/presentation/controllers/stories/GetStoriesController.ts
-packages/presentation/middleware/user-auth.middleware.ts
+// Testing Package - Test utilities
+packages/testing/src/mocks/repositories.ts
+packages/testing/src/factories/user.ts
 ```
 
 ## Development Commands
@@ -136,27 +133,24 @@ Next.js Image optimization configured for:
 ## Code Organization
 
 ### Clean Architecture Structure
-See `@FOLDER_STRUCTURE.md` for complete implementation guide. The project follows these layers:
+See `@FOLDER_STRUCTURE.md` for complete implementation guide. The project follows simplified architecture:
 
-**Domain Layer** (`src/domain/`):
-- Entities: Core business objects (User, Story, Choice, etc.)
-- Repository Interfaces: Contracts for data access
-- Domain Services: Business rules and validation
+**Backend Package** (`packages/backend/`):
+- **Domain Layer** (`src/domain/`): Core business entities, services, and repository interfaces
+- **Application Layer** (`src/application/`): Use cases, business workflows, and DTOs
+- **Infrastructure Layer** (`src/infrastructure/`): Database models, external services, repository implementations
+- **Presentation Layer** (`src/presentation/`): API controllers, middleware, and serializers
 
-**Application Layer** (`src/application/`):
-- Use Cases: User stories and business operations
-- DTOs: Data transfer objects between layers
-- Application Services: Orchestrate use cases
+**Shared Package** (`packages/shared/`):
+- Types: Common TypeScript interfaces used across frontend and backend
+- Constants: Application constants (credit refill times, limits, etc.)
+- Utils: Pure utility functions (date formatting, string helpers, validation)
+- Enums: Shared enumerations (user roles, story genres, etc.)
 
-**Infrastructure Layer** (`src/infrastructure/`):
-- Database: MongoDB implementations of repositories
-- Authentication: JWT, Google OAuth services
-- External APIs: Payment, notification services
-
-**Presentation Layer** (`src/presentation/`):
-- Controllers: HTTP request/response handling
-- Middleware: Authentication, validation, error handling
-- API Routes: Next.js app/api routes
+**Testing Package** (`packages/testing/`):
+- Mocks: Repository mocks and test doubles
+- Factories: Data factories for creating test objects
+- Utils: Testing helpers and setup utilities
 
 ### Frontend (`/apps/frontend/`)
 ```

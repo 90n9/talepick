@@ -1,6 +1,6 @@
 # TalePick Folder Structure Design
 
-> **Next.js 16 Monorepo** • Clean Architecture • Shared API Layer • MongoDB • 2025
+> **Next.js 16 Monorepo** • Simplified Clean Architecture • Backend-Only Logic • MongoDB • 2025
 
 ---
 
@@ -18,12 +18,9 @@ graph TD
     B --> B1[frontend/ - Port 3000]
     B --> B2[admin/ - Port 3001]
 
-    C --> C1[domain/]
-    C --> C2[application/]
-    C --> C3[infrastructure/]
-    C --> C4[presentation/]
-    C --> C5[shared/]
-    C --> C6[testing/]
+    C --> C1[shared/]
+    C --> C2[backend/]
+    C --> C3[testing/]
 
     style A fill:#e1f5fe
     style B fill:#f3e5f5
@@ -34,51 +31,40 @@ graph TD
 
 ---
 
-## 🏗️ Clean Architecture Overview
+## 🏗️ Simplified Architecture Overview
 
 ```mermaid
 graph TB
-    subgraph "Presentation Layer"
-        PA[Frontend App<br/>Next.js]
-        PB[Admin App<br/>Next.js]
+    subgraph "Frontend Apps"
+        PA[Frontend App<br/>Next.js Port 3000]
+        PB[Admin App<br/>Next.js Port 3001]
     end
 
-    subgraph "Packages - Presentation"
-        PC[API Controllers]
-        PD[API Middleware]
-        PE[DTOs]
+    subgraph "Backend Package"
+        PC[Domain Layer<br/>Entities & Rules]
+        PD[Application Layer<br/>Use Cases]
+        PE[Infrastructure Layer<br/>Database & APIs]
+        PF[Presentation Layer<br/>API Controllers]
     end
 
-    subgraph "Packages - Application"
-        PF[Use Cases]
-        PG[App Services]
-        PH[Interfaces]
+    subgraph "Shared Package"
+        PG[Types & Interfaces]
+        PH[Constants & Utils]
+        PI[Enums & Helpers]
     end
 
-    subgraph "Packages - Domain"
-        PI[Entities]
-        PJ[Value Objects]
-        PK[Repository Interfaces]
-        PL[Domain Services]
-    end
-
-    subgraph "Packages - Infrastructure"
-        PM[Database]
-        PN[External APIs]
-        PO[Email]
-        PP[Storage]
-    end
-
-    PA --> PC
-    PB --> PC
-    PC --> PF
-    PF --> PI
-    PK --> PM
+    PA --> PE
+    PB --> PE
+    PC --> PD
+    PD --> PE
+    PE --> PF
+    PC --> PG
 
     style PA fill:#ffcdd2
     style PB fill:#c8e6c9
-    style PI fill:#fff9c4
-    style PM fill:#d1c4e9
+    style PC fill:#fff9c4
+    style PE fill:#d1c4e9
+    style PG fill:#e0f2f1
 ```
 
 ---
@@ -143,131 +129,74 @@ graph LR
 
 ---
 
-## 📦 Clean Architecture Packages
+## 📦 Simplified Package Structure
 
-### Domain Layer (`/packages/domain/`)
-
-```mermaid
-graph TD
-    A[packages/domain/] --> B[entities/]
-    A --> C[value-objects/]
-    A --> D[repositories/]
-    A --> E[services/]
-    A --> F[events/]
-    A --> G[errors/]
-    A --> H[types/]
-
-    B --> B1[User.ts]
-    B --> B2[Story.ts]
-    B --> B3[StoryNode.ts]
-    B --> B4[Achievement.ts]
-    B --> B5[Review.ts]
-
-    D --> D1[IUserRepository.ts]
-    D --> D2[IStoryRepository.ts]
-    D --> D3[IAchievementRepository.ts]
-
-    style A fill:#fff9c4
-```
-
-### Application Layer (`/packages/application/`)
+### Backend Package (`/packages/backend/`) - All Business Logic
 
 ```mermaid
 graph TD
-    A[packages/application/] --> B[use-cases/]
-    A --> C[use-cases-admin/]
-    A --> D[services/]
-    A --> E[dto/]
-    A --> F[validators/]
-    A --> G[interfaces/]
+    A[packages/backend/] --> B[src/]
+    B --> B1[domain/]
+    B --> B2[application/]
+    B --> B3[infrastructure/]
+    B --> B4[presentation/]
 
-    B --> B1[auth/]
-    B --> B2[users/]
-    B --> B3[stories/]
-    B --> B4[achievements/]
-    B --> B5[reviews/]
-    B --> B6[credits/]
+    B1 --> B1a[entities/]
+    B1 --> B1b[services/]
+    B1 --> B1c[repositories/]
 
-    C --> C1[auth/]
-    C --> C2[users/]
-    C --> C3[stories/]
-    C --> C4[analytics/]
-    C --> C5[content/]
+    B2 --> B2a[use-cases/]
+    B2 --> B2b[services/]
+    B2 --> B2c[dto/]
 
-    style A fill:#c8e6c9
-```
+    B3 --> B3a[database/]
+    B3 --> B3b[repositories/]
+    B3 --> B3c[external/]
 
-### Infrastructure Layer (`/packages/infrastructure/`)
-
-```mermaid
-graph TD
-    A[packages/infrastructure/] --> B[database/]
-    A --> C[email/]
-    A --> D[storage/]
-    A --> E[external/]
-    A --> F[cache/]
-    A --> G[logging/]
-
-    B --> B1[connection/]
-    B --> B2[repositories/]
-    B --> B3[models/]
-    B --> B4[seeds/]
-
-    B2 --> B2a[MongoUserRepository.ts]
-    B2 --> B2b[MongoStoryRepository.ts]
-    B2 --> B2c[MongoAchievementRepository.ts]
+    B4 --> B4a[controllers/]
+    B4 --> B4b[middleware/]
+    B4 --> B4c[serializers/]
 
     style A fill:#d1c4e9
 ```
 
-### Presentation Layer (`/packages/presentation/`)
+### Shared Package (`/packages/shared/`) - Types & Utilities
 
 ```mermaid
 graph TD
-    A[packages/presentation/] --> B[controllers/]
-    A --> C[controllers-admin/]
-    A --> D[middleware/]
-    A --> E[serializers/]
-    A --> F[routes/]
-    A --> G[types/]
+    A[packages/shared/] --> B[src/]
+    B --> B1[types/]
+    B --> B2[constants/]
+    B --> B3[utils/]
+    B --> B4[enums/]
 
-    B --> B1[auth/]
-    B --> B2[users/]
-    B --> B3[stories/]
-    B --> B4[achievements/]
+    B1 --> B1a[user.ts]
+    B1 --> B1b[story.ts]
+    B1 --> B1c[achievement.ts]
 
-    C --> C1[auth/]
-    C --> C2[users/]
-    C --> C3[stories/]
-    C --> C4[analytics/]
+    B2 --> B2a[credits.ts]
+    B2 --> B2b[app.ts]
 
-    D --> D1[user/]
-    D --> D2[admin/]
-    D --> D3[shared/]
-
-    style A fill:#ffcdd2
-```
-
-### Shared Layer (`/packages/shared/`)
-
-```mermaid
-graph TD
-    A[packages/shared/] --> B[types/]
-    A --> C[utils/]
-    A --> D[constants/]
-    A --> E[config/]
-    A --> F[enums/]
-
-    B --> B1[api.types.ts]
-    B --> B2[common.types.ts]
-    B --> B3[environment.types.ts]
-
-    C --> C1[date.ts]
-    C --> C2[string.ts]
-    C --> C3[validation.ts]
-    C --> C4[crypto.ts]
+    B3 --> B3a[date.ts]
+    B3 --> B3b[string.ts]
 
     style A fill:#e0f2f1
+```
+
+### Testing Package (`/packages/testing/`)
+
+```mermaid
+graph TD
+    A[packages/testing/] --> B[src/]
+    B --> B1[mocks/]
+    B --> B2[factories/]
+    B --> B3[utils/]
+
+    B1 --> B1a[repositories/]
+    B2 --> B2a[user.ts]
+    B2 --> B2b[story.ts]
+
+    style A fill:#f3e5f5
 ```
 
 ---
@@ -412,37 +341,38 @@ graph LR
 ### Phase 1: Core Structure (Week 1)
 
 ```bash
-# Create packages structure
-mkdir -p packages/{domain,application,infrastructure,presentation,shared,testing}
+# Create simplified packages structure
+mkdir -p packages/{shared,backend,testing}
 
 # Add package.json files
-npm init -y -w packages/domain
-npm init -y -w packages/application
-# ... etc
+npm init -y -w packages/shared
+npm init -y -w packages/backend
+npm init -y -w packages/testing
 
 # Configure TypeScript paths
-# Create initial domain entities
+# Create shared types and constants
 ```
 
 ### Phase 2: Development Setup (Week 1)
 
 ```bash
 # Install dependencies
-npm install mongoose @types/mongoose -w packages/infrastructure
-npm install jsonwebtoken @types/jsonwebtoken -w packages/infrastructure
-npm install zod -w packages/application
+npm install zod -w packages/shared
+npm install mongoose jsonwebtoken bcryptjs -w packages/backend
+npm install vitest @testing-library/react -w packages/testing
 
-# Set up database connection
-# Create basic middleware
+# Set up database connection in backend package
+# Create initial domain entities
+# Set up basic API controllers
 ```
 
 ### Phase 3: Feature Development (Week 2+)
 
 ```bash
-# Add models incrementally
-# Add use cases as needed
-# Implement controllers
-# Add API routes
+# Add use cases incrementally
+# Implement repositories in backend
+# Add API routes in apps
+# Create test utilities
 ```
 
 ---
@@ -493,16 +423,46 @@ npm install zod -w packages/application
 {
   "compilerOptions": {
     "paths": {
-      "@shared/domain": ["packages/domain"],
-      "@shared/application": ["packages/application"],
-      "@shared/infrastructure": ["packages/infrastructure"],
-      "@shared/presentation": ["packages/presentation"],
-      "@shared/shared": ["packages/shared"]
+      "@talepick/shared": ["packages/shared"],
+      "@talepick/backend": ["packages/backend"],
+      "@talepick/testing": ["packages/testing"]
     }
+  }
+}
+```
+
+### Package Dependencies Example
+```json
+// packages/shared/package.json
+{
+  "name": "@talepick/shared",
+  "main": "dist/index.js",
+  "dependencies": {
+    "zod": "^4.1.13"
+  }
+}
+
+// packages/backend/package.json
+{
+  "name": "@talepick/backend",
+  "main": "dist/index.js",
+  "dependencies": {
+    "@talepick/shared": "workspace:*",
+    "mongoose": "^8.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "bcryptjs": "^2.4.3"
+  }
+}
+
+// apps/frontend/package.json
+{
+  "dependencies": {
+    "@talepick/shared": "workspace:*",
+    "@talepick/testing": "workspace:*"
   }
 }
 ```
 
 ---
 
-*This simplified structure supports phased development while maintaining flexibility for growth, with comprehensive testing and security at every layer.*
+*This simplified structure reduces complexity while maintaining clean architecture principles. Business logic stays in the backend, frontend consumes APIs, and shared types ensure consistency across the entire application.*
