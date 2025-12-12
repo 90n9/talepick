@@ -1,5 +1,11 @@
 # UserStoryProgress Collection
 
+## Mongoose Model Reference
+- **Model File**: USER_STORY_PROGRESS (singular)
+- **Model Class**: USER STORY PROGRESS (singular)
+- **Collection**: LULSLELR LSLTLOLRLY LPLRLOLGLRLELSLSs (plural, with underscores for readability)
+
+
 **Purpose**: Game progress tracking with multiple playthroughs and choice tracking
 
 ## Schema

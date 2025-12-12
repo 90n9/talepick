@@ -1,5 +1,11 @@
 # StoryGallery Collection
 
+## Mongoose Model Reference
+- **Model File**: StoryGallery.ts (singular)
+- **Model Class**: StoryGallery (singular)
+- **Collection**: story_gallery (plural, with underscores for readability)
+
+
 **Purpose**: Story image gallery management with cached URLs for performance optimization
 
 ## Schema

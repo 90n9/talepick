@@ -1,5 +1,11 @@
 # StoryNodes Collection
 
+## Mongoose Model Reference
+- **Model File**: StoryNode.ts (singular)
+- **Model Class**: StoryNode (singular)
+- **Collection**: story_nodes (plural, with underscores for readability)
+
+
 **Purpose**: Individual story nodes with branching choices and rewards
 
 ## Schema

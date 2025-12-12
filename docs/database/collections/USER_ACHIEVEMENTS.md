@@ -2,6 +2,11 @@
 
 **Purpose**: Completed achievements tracking (only created when achievement is unlocked)
 
+## Mongoose Model Reference
+- **Model File**: `UserAchievement.ts` (singular)
+- **Model Class**: `UserAchievement` (singular)
+- **Collection**: `user_achievements` (plural, with underscores)
+
 ## Schema
 
 ```javascript

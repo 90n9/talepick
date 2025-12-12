@@ -22,6 +22,7 @@ Based on analysis of the mock applications and existing documentation, TalePick 
 - ✅ **Mock Frontend** (/mock/frontend) - Complete UI simulation
 - ✅ **Mock Admin** (/mock/admin) - Full admin interface
 - ✅ **Database Design** - 24 collections documented
+- ✅ **Collection Naming Convention** - Established Mongoose naming standards (single-word auto-generated, multi-word `lowercase_with_underscores`)
 - ✅ **API Specification** - RESTful endpoints defined
 
 ### Target Architecture
@@ -53,6 +54,8 @@ Based on analysis of the mock applications and existing documentation, TalePick 
 - **Code Reuse**: Authentication, database models, and business logic shared between apps
 - **Simplified Deployment**: Only two applications to deploy (frontend + admin)
 - **Database**: Single MongoDB instance shared by both applications
+  - **Collection Naming**: Follows Mongoose conventions - single-word models auto-generate collections, multi-word models use `lowercase_with_underscores` (e.g., `User` → `users`, `UserAchievement` → `user_achievements`)
+  - **Model Naming**: Models use singular PascalCase (e.g., `UserAchievement`, not `UserAchievements`)
 
 ---
 
@@ -171,10 +174,10 @@ Based on analysis of the mock applications and existing documentation, TalePick 
 
 #### Week 1: Project Setup & Infrastructure
 - **Milestone 1.1**: Development Environment
-  - [ ] Set up development Docker containers
-  - [ ] Configure MongoDB with initial schemas
-  - [ ] Set up Next.js monorepo with workspaces
-  - [ ] Configure TypeScript and linting
+  - [x] Set up development Docker containers
+  - [ ] Configure MongoDB with initial schemas (25 models following Mongoose naming conventions)
+  - [x] Set up Next.js monorepo with workspaces
+  - [x] Configure TypeScript and linting
   - [ ] Set up testing framework (Vitest)
 
 - **Milestone 1.2**: API Foundation
@@ -414,6 +417,11 @@ Based on analysis of the mock applications and existing documentation, TalePick 
   - [ ] Set up customer support system
 
 - **Milestone 4.6**: Documentation
+  - [x] Create MongoDB collection naming convention guide (`docs/database/MONGODB_NAMING_CONVENTION.md`)
+    - ✅ Established Mongoose naming standards
+    - ✅ Single-word models: auto-generated collections (e.g., `User` → `users`)
+    - ✅ Multi-word models: `lowercase_with_underscores` format (e.g., `UserAchievement` → `user_achievements`)
+    - ✅ Model naming: Always singular PascalCase (e.g., `UserAchievement`, not `UserAchievements`)
   - [ ] Write user documentation
   - [ ] Create admin guide
   - [ ] Document API endpoints

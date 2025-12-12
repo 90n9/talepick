@@ -1,5 +1,11 @@
 # UserAvatars Collection
 
+## Mongoose Model Reference
+- **Model File**: USER_AVATARS (singular)
+- **Model Class**: USER AVATARS (singular)
+- **Collection**: LULSLELR LALVLALTLALRLSs (plural, with underscores for readability)
+
+
 **Purpose**: User avatar ownership and usage tracking (separated from Users for scalability)
 
 ## Schema

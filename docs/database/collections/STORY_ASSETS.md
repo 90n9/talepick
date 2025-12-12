@@ -1,5 +1,11 @@
 # StoryAssets Collection
 
+## Mongoose Model Reference
+- **Model File**: StoryAsset.ts (singular)
+- **Model Class**: StoryAsset (singular)
+- **Collection**: story_assets (plural, with underscores for readability)
+
+
 **Purpose**: Media assets management for stories
 
 ## Schema
