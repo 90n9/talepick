@@ -16,6 +16,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "composite": true,
+    "baseUrl": ".",
     "paths": {
       "@talepick/shared": ["../shared/src"],
       "@talepick/backend": ["../backend/src"]
