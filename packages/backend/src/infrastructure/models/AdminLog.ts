@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, FilterQuery, Schema } from 'mongoose';
 
 // Action constants
 export const ADMIN_ACTIONS = {
@@ -58,8 +58,8 @@ export const HIGH_RISK_ACTIONS = [
 
 // Interfaces
 export interface IChangeDetails {
-  before?: Record<string, any>;
-  after?: Record<string, any>;
+  before?: Record<string, unknown>;
+  after?: Record<string, unknown>;
 }
 
 export interface IAdminLog extends Document {
@@ -172,8 +172,8 @@ adminLogSchema.index({ adminId: 1, targetType: 1, timestamp: -1 });
 adminLogSchema.index({ action: 1, timestamp: -1 });
 
 // Virtual for checking if this is a high-risk action
-adminLogSchema.virtual('isHighRisk').get(function () {
-  return HIGH_RISK_ACTIONS.includes(this.action as any);
+adminLogSchema.virtual('isHighRisk').get(function (this: IAdminLog) {
+  return HIGH_RISK_ACTIONS.includes(this.action as (typeof HIGH_RISK_ACTIONS)[number]);
 });
 
 // Virtual for age of the log entry
@@ -212,7 +212,7 @@ adminLogSchema.statics.getComplianceAuditTrail = function (
 ) {
   const cutoffDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
 
-  const query: any = {
+  const query: FilterQuery<IAdminLog> = {
     timestamp: { $gte: cutoffDate },
   };
 

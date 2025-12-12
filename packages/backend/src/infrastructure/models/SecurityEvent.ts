@@ -54,7 +54,7 @@ export interface IEventDetails {
   userAgent?: string;
   riskScore?: number;
   targetResource?: string;
-  additionalData?: Record<string, any>;
+  additionalData?: Record<string, unknown>;
 }
 
 export interface IActionDetails {

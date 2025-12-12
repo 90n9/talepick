@@ -24,12 +24,12 @@ export interface IValidation {
   required: boolean;
   min?: number;
   max?: number;
-  allowedValues?: any[];
+  allowedValues?: unknown[];
 }
 
 export interface ISystemConfig extends Document {
   key: string;
-  value: any;
+  value: unknown;
   description: string;
   category: SystemConfigCategory;
   isPublic: boolean;
@@ -158,7 +158,7 @@ systemConfigSchema.statics.getByCategory = function (category: SystemConfigCateg
 };
 
 // Static method to validate configuration value
-systemConfigSchema.statics.validateConfigValue = async function (key: string, newValue: any) {
+systemConfigSchema.statics.validateConfigValue = async function (key: string, newValue: unknown) {
   const config = await this.findOne({ key });
 
   if (!config) {
@@ -168,31 +168,38 @@ systemConfigSchema.statics.validateConfigValue = async function (key: string, ne
   const { validation } = config;
 
   // Type validation
-  if (validation.type === ValidationType.NUMBER && typeof newValue !== 'number') {
-    throw new Error('Value must be a number');
+  if (validation.type === ValidationType.NUMBER) {
+    if (typeof newValue !== 'number') {
+      throw new Error('Value must be a number');
+    }
   }
 
-  if (validation.type === ValidationType.BOOLEAN && typeof newValue !== 'boolean') {
-    throw new Error('Value must be boolean');
+  if (validation.type === ValidationType.BOOLEAN) {
+    if (typeof newValue !== 'boolean') {
+      throw new Error('Value must be boolean');
+    }
   }
 
-  if (validation.type === ValidationType.STRING && typeof newValue !== 'string') {
-    throw new Error('Value must be a string');
+  if (validation.type === ValidationType.STRING) {
+    if (typeof newValue !== 'string') {
+      throw new Error('Value must be a string');
+    }
   }
 
-  if (validation.type === ValidationType.ARRAY && !Array.isArray(newValue)) {
-    throw new Error('Value must be an array');
+  if (validation.type === ValidationType.ARRAY) {
+    if (!Array.isArray(newValue)) {
+      throw new Error('Value must be an array');
+    }
   }
 
-  if (
-    validation.type === ValidationType.OBJECT &&
-    (typeof newValue !== 'object' || Array.isArray(newValue))
-  ) {
-    throw new Error('Value must be an object');
+  if (validation.type === ValidationType.OBJECT) {
+    if (typeof newValue !== 'object' || Array.isArray(newValue) || newValue === null) {
+      throw new Error('Value must be an object');
+    }
   }
 
   // Range validation for numbers
-  if (validation.type === ValidationType.NUMBER) {
+  if (validation.type === ValidationType.NUMBER && typeof newValue === 'number') {
     if (validation.min !== undefined && newValue < validation.min) {
       throw new Error(`Value must be at least ${validation.min}`);
     }
@@ -202,7 +209,7 @@ systemConfigSchema.statics.validateConfigValue = async function (key: string, ne
   }
 
   // String length validation
-  if (validation.type === ValidationType.STRING) {
+  if (validation.type === ValidationType.STRING && typeof newValue === 'string') {
     if (validation.min !== undefined && newValue.length < validation.min) {
       throw new Error(`String must be at least ${validation.min} characters`);
     }
@@ -212,7 +219,7 @@ systemConfigSchema.statics.validateConfigValue = async function (key: string, ne
   }
 
   // Array length validation
-  if (validation.type === ValidationType.ARRAY) {
+  if (validation.type === ValidationType.ARRAY && Array.isArray(newValue)) {
     if (validation.min !== undefined && newValue.length < validation.min) {
       throw new Error(`Array must have at least ${validation.min} items`);
     }
@@ -232,7 +239,7 @@ systemConfigSchema.statics.validateConfigValue = async function (key: string, ne
 // Static method to update configuration with audit trail
 systemConfigSchema.statics.updateConfig = function (
   key: string,
-  newValue: any,
+  newValue: unknown,
   modifiedBy: mongoose.Types.ObjectId
 ) {
   return this.findOneAndUpdate(
@@ -281,7 +288,7 @@ systemConfigSchema.statics.getRecentChanges = function (days = 7) {
 
 // Static method to bulk update configurations
 systemConfigSchema.statics.bulkUpdateConfigs = function (
-  updates: Array<{ key: string; value: any }>,
+  updates: Array<{ key: string; value: unknown }>,
   modifiedBy: mongoose.Types.ObjectId
 ) {
   const bulkOps = updates.map((update) => ({
@@ -360,7 +367,7 @@ systemConfigSchema.statics.importConfigs = function (
 
 // Method to update configuration value
 systemConfigSchema.methods.setValue = function (
-  newValue: any,
+  newValue: unknown,
   modifiedBy: mongoose.Types.ObjectId
 ) {
   this.value = newValue;

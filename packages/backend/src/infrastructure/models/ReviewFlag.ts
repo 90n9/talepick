@@ -178,7 +178,7 @@ reviewFlagSchema.statics.updateStatus = function (
   status: FlagStatus,
   reviewedBy: mongoose.Types.ObjectId
 ) {
-  const updateData: any = { status };
+  const updateData: Partial<IReviewFlag> = { status };
   if (reviewedBy) {
     updateData.reviewedBy = reviewedBy;
     updateData.reviewedAt = new Date();

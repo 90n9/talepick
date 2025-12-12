@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, FilterQuery, Schema } from 'mongoose';
 import crypto from 'crypto';
 
 // OTP type enum
@@ -287,7 +287,7 @@ otpCodeSchema.statics.invalidatePreviousOtps = function (
 // Static method to get recent OTPs for monitoring
 otpCodeSchema.statics.getRecentOtps = function (hoursBack: number = 1, type?: OtpType) {
   const cutoffDate = new Date(Date.now() - hoursBack * 60 * 60 * 1000);
-  const query: any = {
+  const query: FilterQuery<IOtpCode> = {
     createdAt: { $gte: cutoffDate },
   };
 

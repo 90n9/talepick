@@ -68,9 +68,9 @@ export interface IMetadata {
   language?: string;
   storyProgress?: number;
   userLevel?: number;
-  choiceContext?: Record<string, any>;
-  achievementDetails?: Record<string, any>;
-  customProperties?: Record<string, any>;
+  choiceContext?: Record<string, unknown>;
+  achievementDetails?: Record<string, unknown>;
+  customProperties?: Record<string, unknown>;
 }
 
 export interface IAnalytics extends Document {
