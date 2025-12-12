@@ -1,7 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URL =
-  process.env.MONGODB_URL || 'mongodb://root:example@localhost:27017/talepick?authSource=admin';
+const MONGODB_URL = process.env.MONGODB_URL;
 
 if (!MONGODB_URL) {
   throw new Error('Please define the MONGODB_URL environment variable');
@@ -36,7 +35,7 @@ async function connectDB() {
       socketTimeoutMS: 45000,
     };
 
-    cached!.promise = mongoose.connect(MONGODB_URL, connectionOptions);
+    cached!.promise = mongoose.connect(MONGODB_URL!, connectionOptions);
   }
 
   try {
