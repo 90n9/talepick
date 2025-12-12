@@ -1,5 +1,9 @@
 # UserFavorites Collection
 
+## Mongoose Model Reference
+- **Model File**: `UserFavorite.ts` (singular)
+- **Model Class**: `UserFavorite` (singular)
+- **Collection**: `user_favorites` (plural, with underscores for readability)
 **Purpose**: Simple story favorite tracking (pure relationship collection)
 
 ## Schema

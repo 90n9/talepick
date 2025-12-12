@@ -1,6 +1,12 @@
 # AdminLoginHistory Collection
 
-## Purpose
+## Mongoose Model Reference
+- **Model File**: AdminLoginHistory.ts (singular)
+- **Model Class**: AdminLoginHistory (singular)
+- **Collection**: admin_login_history (plural, with underscores for readability)
+
+
+**Purpose**
 
 Admin login tracking and security monitoring for TalePick platform administration access control and threat detection.
 

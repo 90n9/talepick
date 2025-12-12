@@ -1,5 +1,11 @@
 # StoryFlags Collection
 
+## Mongoose Model Reference
+- **Model File**: StoryFlag.ts (singular)
+- **Model Class**: StoryFlag (singular)
+- **Collection**: story_flags (plural, with underscores for readability)
+
+
 ## Purpose
 
 Story content reporting and moderation system for maintaining story quality and community standards compliance.

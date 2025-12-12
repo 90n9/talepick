@@ -1,6 +1,12 @@
 # SecurityEvents Collection
 
-## Purpose
+## Mongoose Model Reference
+- **Model File**: SecurityEvent.ts (singular)
+- **Model Class**: SecurityEvent (singular)
+- **Collection**: security_events (plural, with underscores for readability)
+
+
+**Purpose**
 
 Security monitoring and automatic threat detection for comprehensive protection of the TalePick platform against malicious activities and security breaches.
 

@@ -1,6 +1,12 @@
 # OTPCodes Collection
 
-## Purpose
+## Mongoose Model Reference
+- **Model File**: OTPCode.ts (singular)
+- **Model Class**: OTPCode (singular)
+- **Collection**: otp_codes (plural, with underscores for readability)
+
+
+**Purpose**
 
 OTP (One-Time Password) verification with rate limiting and security features for secure email-based authentication flows on the TalePick platform.
 

@@ -4,6 +4,11 @@
 
 Administrator account management with OAuth support and role-based permissions for TalePick platform administration.
 
+## Mongoose Model Reference
+- **Model File**: `AdminAccount.ts` (singular)
+- **Model Class**: `AdminAccount` (singular)
+- **Collection**: `admin_accounts` (plural, with underscores for readability)
+
 ## Schema
 
 ```javascript

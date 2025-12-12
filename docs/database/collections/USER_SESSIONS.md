@@ -4,6 +4,11 @@
 
 User session management with OAuth support for secure authentication, device tracking, and session lifecycle management on the TalePick platform.
 
+## Mongoose Model Reference
+- **Model File**: `UserSession.ts` (singular)
+- **Model Class**: `UserSession` (singular)
+- **Collection**: `user_sessions` (plural, with underscores)
+
 ## Schema
 
 ```javascript

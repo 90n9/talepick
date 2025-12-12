@@ -1,6 +1,12 @@
 # SystemConfig Collection
 
-## Purpose
+## Mongoose Model Reference
+- **Model File**: SystemConfig.ts (singular)
+- **Model Class**: SystemConfig (singular)
+- **Collection**: system_config (plural, with underscores for readability)
+
+
+**Purpose**
 
 Centralized system configuration and feature flags for runtime configuration management, allowing dynamic control of TalePick platform behavior without code deployment.
 

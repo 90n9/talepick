@@ -1,5 +1,11 @@
 # ReviewVotes Collection
 
+## Mongoose Model Reference
+- **Model File**: ReviewVote.ts (singular)
+- **Model Class**: ReviewVote (singular)
+- **Collection**: review_votes (plural, with underscores for readability)
+
+
 ## Purpose
 
 Review voting system with duplicate prevention for community-driven content quality assessment.

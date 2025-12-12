@@ -1,5 +1,11 @@
 # ReviewFlags Collection
 
+## Mongoose Model Reference
+- **Model File**: ReviewFlag.ts (singular)
+- **Model Class**: ReviewFlag (singular)
+- **Collection**: review_flags (plural, with underscores for readability)
+
+
 ## Purpose
 
 Community review reporting and moderation system for maintaining content quality and community standards.

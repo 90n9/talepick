@@ -223,7 +223,7 @@ For complete database schema, relationships, and entity mappings, refer to **doc
 
 #### Schema Reference Examples
 ```typescript
-// User Collection (docs/database/collections/users.md)
+// User Collection (docs/database/collections/USERS.md)
 {
   _id: ObjectId,
   email: String,              // unique, indexed

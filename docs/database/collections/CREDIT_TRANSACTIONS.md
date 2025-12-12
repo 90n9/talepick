@@ -1,5 +1,11 @@
 # CreditTransactions Collection
 
+## Mongoose Model Reference
+- **Model File**: CreditTransaction.ts (singular)
+- **Model Class**: CreditTransaction (singular)
+- **Collection**: credit_transactions (plural, with underscores for readability)
+
+
 **Purpose**: Credit transaction history and economy tracking
 
 ## Schema
