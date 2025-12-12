@@ -410,4 +410,8 @@ UserStoryProgressSchema.statics.getRareEndings = function (storyId: Types.Object
     .populate('userId', 'username profile.displayName');
 };
 
-export default mongoose.model<IUserStoryProgress>('UserStoryProgress', UserStoryProgressSchema);
+export const UserStoryProgress = mongoose.model<IUserStoryProgress>(
+  'UserStoryProgress',
+  UserStoryProgressSchema
+);
+export default UserStoryProgress;

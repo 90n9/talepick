@@ -302,4 +302,5 @@ StorySchema.index({ 'media.trailerUrl': 1 });
 StorySchema.index({ deletedAt: 1 }, { sparse: true });
 StorySchema.index({ 'moderation.status': 1 });
 
-export default mongoose.model<IStory>('Story', StorySchema);
+export const Story = mongoose.model<IStory>('Story', StorySchema);
+export default Story;

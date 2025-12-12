@@ -382,4 +382,5 @@ StoryNodeSchema.statics.updateNodeLayout = function (
   );
 };
 
-export default mongoose.model<IStoryNode>('StoryNode', StoryNodeSchema);
+export const StoryNode = mongoose.model<IStoryNode>('StoryNode', StoryNodeSchema);
+export default StoryNode;

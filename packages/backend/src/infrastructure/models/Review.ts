@@ -177,4 +177,5 @@ ReviewSchema.statics.getAverageRating = async function (storyId: Types.ObjectId)
     : { average: 0, count: 0 };
 };
 
-export default mongoose.model<IReview>('Review', ReviewSchema);
+export const Review = mongoose.model<IReview>('Review', ReviewSchema);
+export default Review;

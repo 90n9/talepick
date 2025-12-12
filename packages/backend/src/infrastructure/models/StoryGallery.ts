@@ -336,4 +336,5 @@ StoryGallerySchema.statics.getMostPopularImages = function (limit = 20) {
     .populate('storyId', 'title');
 };
 
-export default mongoose.model<IStoryGallery>('StoryGallery', StoryGallerySchema);
+export const StoryGallery = mongoose.model<IStoryGallery>('StoryGallery', StoryGallerySchema);
+export default StoryGallery;

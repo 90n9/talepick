@@ -259,4 +259,5 @@ UserSchema.methods.toPublicJSON = function () {
   return user;
 };
 
-export default mongoose.model<IUser>('User', UserSchema);
+export const User = mongoose.model<IUser>('User', UserSchema);
+export default User;

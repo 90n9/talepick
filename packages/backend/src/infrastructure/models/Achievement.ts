@@ -324,4 +324,5 @@ AchievementSchema.statics.getAchievementsWithAvatarRewards = function () {
   });
 };
 
-export default mongoose.model<IAchievement>('Achievement', AchievementSchema);
+export const Achievement = mongoose.model<IAchievement>('Achievement', AchievementSchema);
+export default Achievement;

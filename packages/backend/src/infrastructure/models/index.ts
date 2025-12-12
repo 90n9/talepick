@@ -1,26 +1,26 @@
 // User models
-export { default as User } from './User';
-export { default as CreditTransaction } from './CreditTransaction';
-export { default as UserAchievement } from './UserAchievement';
-export { default as UserAvatar } from './UserAvatar';
-export { default as UserStoryProgress } from './UserStoryProgress';
-export { default as UserFavorite } from './UserFavorite';
+export { User } from './User';
+export { CreditTransaction } from './CreditTransaction';
+export { UserAchievement } from './UserAchievement';
+export { UserAvatar } from './UserAvatar';
+export { UserStoryProgress } from './UserStoryProgress';
+export { UserFavorite } from './UserFavorite';
 export { UserSession } from './UserSession';
 
 // Story models
-export { default as Story } from './Story';
-export { default as StoryNode } from './StoryNode';
-export { default as StoryAsset } from './StoryAsset';
-export { default as StoryGallery } from './StoryGallery';
-export { default as Genre } from './Genre';
-export { default as Review } from './Review';
+export { Story } from './Story';
+export { StoryNode } from './StoryNode';
+export { StoryAsset } from './StoryAsset';
+export { StoryGallery } from './StoryGallery';
+export { Genre } from './Genre';
+export { Review } from './Review';
 export { ReviewFlag } from './ReviewFlag';
 export { ReviewVote } from './ReviewVote';
 export { StoryFlag } from './StoryFlag';
 
 // Achievement models
-export { default as Achievement } from './Achievement';
-export { default as Avatar } from './Avatar';
+export { Achievement } from './Achievement';
+export { Avatar } from './Avatar';
 
 // Admin models
 export { AdminAccount } from './AdminAccount';

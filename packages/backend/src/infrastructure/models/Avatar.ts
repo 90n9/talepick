@@ -283,4 +283,5 @@ AvatarSchema.pre('save', function (this: HydratedDocument<IAvatar>) {
   }
 });
 
-export default mongoose.model<IAvatar>('Avatar', AvatarSchema);
+export const Avatar = mongoose.model<IAvatar>('Avatar', AvatarSchema);
+export default Avatar;
