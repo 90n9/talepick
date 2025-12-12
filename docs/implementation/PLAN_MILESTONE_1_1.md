@@ -48,42 +48,48 @@
 1. **MongoDB Schemas & Models**
    - No Mongoose models implemented
    - Database connection not established
-   - 15 collection schemas need implementation
+   - 14 documented collection schemas in `docs/database/collections` need implementation (use only documented fields/indexes)
 
 2. **Testing Framework**
    - Vitest not configured for admin app
    - No shared testing utilities
 
 3. **Clean Architecture Structure**
-   - Packages directory doesn't exist
+   - Simplified packages structure not created (backend, shared, testing)
    - No shared API layer
 
 ---
 
 ## 📝 Detailed Implementation Tasks
 
-### Task 1: Create Clean Architecture Packages Structure
+### Task 1: Create Simplified Packages Structure
 **Estimated Time**: 2 hours
 **Priority**: High
 
 **Steps**:
 ```bash
-# Create packages directory structure
-mkdir -p packages/{domain,application,infrastructure,presentation,shared,testing}
+# Create simplified packages directory structure
+mkdir -p packages/{shared,backend,testing}
 
 # Initialize packages
 cd packages
-npm init -y -w domain
-npm init -y -w application
-npm init -y -w infrastructure
-npm init -y -w presentation
 npm init -y -w shared
+npm init -y -w backend
 npm init -y -w testing
 
-# Create subdirectories
-mkdir -p infrastructure/{database,models,repositories}
-mkdir -p shared/{types,utils,constants}
-mkdir -p testing/{mocks,factories,utils}
+# Create backend package structure
+mkdir -p backend/src/{domain,application,infrastructure,presentation}
+mkdir -p backend/src/domain/{entities,services,repositories}
+mkdir -p backend/src/application/{use-cases,services,dto}
+mkdir -p backend/src/infrastructure/{database,repositories,external}
+mkdir -p backend/src/presentation/{controllers,middleware,serializers}
+
+# Create shared package structure
+mkdir -p shared/src/{types,constants,utils,enums}
+
+# Create testing package structure
+mkdir -p testing/src/{mocks,factories,utils}
+mkdir -p testing/src/mocks/repositories
 ```
 
 **Verification**: Run `npm install` to ensure workspace recognition
@@ -150,8 +156,8 @@ export default defineConfig({
 
 **Steps**:
 ```bash
-# Install in infrastructure package
-cd packages/infrastructure
+# Install in backend package
+cd packages/backend
 npm install mongoose @types/mongoose jsonwebtoken @types/jsonwebtoken bcryptjs @types/bcryptjs
 
 # Install shared dependencies
@@ -161,6 +167,10 @@ npm install zod @types/node
 # Install development dependencies
 cd ../testing
 npm install --save-dev vitest mongoose @types/mongoose
+
+# Install tsx for TypeScript execution in root
+cd ../..
+npm install --save-dev tsx
 ```
 
 **Verification**: Ensure all packages install without errors
@@ -171,7 +181,7 @@ npm install --save-dev vitest mongoose @types/mongoose
 **Estimated Time**: 1 hour
 **Priority**: High
 
-**Create `packages/infrastructure/database/connection.ts`**:
+**Create `packages/backend/src/infrastructure/database/connection.ts`**:
 ```typescript
 import mongoose from 'mongoose';
 
@@ -227,55 +237,58 @@ export default connectDB;
 
 ---
 
-### Task 5: Implement MongoDB Schemas
+### Task 5: Implement MongoDB Schemas from Documentation
 **Estimated Time**: 8-10 hours
 **Priority**: Critical
 
-**Directory Structure**:
+**Directory Structure** (mirrors `docs/database/collections`):
 ```bash
-packages/infrastructure/models/
-├── users/
-│   ├── User.ts
-│   ├── UserStats.ts
-│   ├── CreditTransaction.ts
-│   └── UserAchievement.ts
-├── stories/
-│   ├── Story.ts
-│   ├── StoryNode.ts
-│   ├── StoryAsset.ts
-│   ├── Genre.ts
-│   └── Review.ts
-├── achievements/
-│   ├── Achievement.ts
-│   └── Avatar.ts
+packages/backend/src/infrastructure/models/
+├── Achievement.ts
+├── Avatar.ts
+├── CreditTransaction.ts
+├── Genre.ts
+├── Review.ts
+├── Story.ts
+├── StoryAsset.ts
+├── StoryGallery.ts
+├── StoryNode.ts
+├── User.ts
+├── UserAchievement.ts
+├── UserAvatar.ts
+├── UserFavorite.ts
+├── UserStoryProgress.ts
 └── index.ts
 ```
 
-**Implementation Order**:
+**Implementation Order** (use only fields and indexes from `docs/database/collections/*.md`):
 
-1. **User Model** (`packages/infrastructure/models/users/User.ts`)
-2. **Genre Model** (`packages/infrastructure/models/stories/Genre.ts`)
-3. **Story Model** (`packages/infrastructure/models/stories/Story.ts`)
-4. **StoryNode Model** (`packages/infrastructure/models/stories/StoryNode.ts`)
-5. **Achievement Model** (`packages/infrastructure/models/achievements/Achievement.ts`)
-6. **Review Model** (`packages/infrastructure/models/stories/Review.ts`)
-7. **Remaining models** based on documentation
+1. **Users** (`User.ts`)
+2. **Genres** (`Genre.ts`)
+3. **Stories** (`Story.ts`)
+4. **StoryNodes** (`StoryNode.ts`)
+5. **StoryAssets** (`StoryAsset.ts`)
+6. **StoryGallery** (`StoryGallery.ts`)
+7. **Reviews** (`Review.ts`)
+8. **Achievements** (`Achievement.ts`)
+9. **Avatars** (`Avatar.ts`)
+10. **CreditTransactions** (`CreditTransaction.ts`)
+11. **UserAchievements** (`UserAchievement.ts`)
+12. **UserAvatars** (`UserAvatar.ts`)
+13. **UserFavorites** (`UserFavorite.ts`)
+14. **UserStoryProgress** (`UserStoryProgress.ts`)
 
-**Example: User Model Implementation**:
+**Example: User Model Implementation (fields taken only from `docs/database/collections/USERS.md`)**:
 ```typescript
 import mongoose, { Schema, Document } from 'mongoose';
-import bcrypt from 'bcryptjs';
 
 export interface IUser extends Document {
   email: string;
   username: string;
-  passwordHash?: string;
+  passwordHash?: string; // optional for OAuth
   profile: {
     displayName: string;
-    avatar: {
-      type: 'default' | 'custom' | 'google';
-      value: string;
-    };
+    avatar: { type: 'default' | 'custom' | 'google'; value: string };
     bio?: string;
     profileImageUrl?: string;
   };
@@ -286,128 +299,94 @@ export interface IUser extends Document {
     emailVerified: boolean;
     hasPassword: boolean;
   };
+  accountStatus: {
+    status: 'active' | 'suspended' | 'banned' | 'under_review' | 'locked';
+    reason?: string;
+    moderatedBy?: mongoose.Types.ObjectId;
+    moderatedAt?: Date;
+    suspensionEndsAt?: Date;
+    lockType?: 'manual' | 'auto_security' | 'auto_fraud';
+    lockExpiresAt?: Date;
+  };
   gameStats: {
     credits: number;
     maxCredits: number;
-    totalPlayTime: number;
-    storiesCompleted: number;
-    lastCreditRefill: Date;
+    lastCreditRefill?: Date;
+    totalStoriesPlayed: number;
+    totalEndingsUnlocked: number;
+    totalAvatarsUnlocked: number;
+    currentAvatarId?: string;
+    createdAt?: Date;
+    lastLoginAt?: Date;
   };
-  accountStatus: {
-    status: 'active' | 'suspended' | 'banned' | 'under_review';
-    reason?: string;
-    statusUntil?: Date;
-  };
-  security: {
-    failedLoginAttempts: number;
-    lastFailedLogin?: Date;
-    isLocked: boolean;
-    lockUntil?: Date;
-  };
-  createdAt: Date;
-  updatedAt: Date;
+  deletedAt?: Date;
+  deletedBy?: mongoose.Types.ObjectId;
+  deleteReason?: string;
 }
 
-const UserSchema: Schema = new Schema({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true,
-    index: true
-  },
-  username: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    minlength: 3,
-    maxlength: 20,
-    index: true
-  },
-  passwordHash: { type: String, select: false },
-  profile: {
-    displayName: { type: String, required: true, trim: true },
-    avatar: {
-      type: { type: String, enum: ['default', 'custom', 'google'], default: 'default' },
-      value: { type: String, default: '' }
+const UserSchema: Schema = new Schema(
+  {
+    email: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
+    username: { type: String, required: true, unique: true, trim: true, index: true },
+    passwordHash: { type: String, select: false },
+    profile: {
+      displayName: { type: String, required: true, trim: true },
+      avatar: {
+        type: { type: String, enum: ['default', 'custom', 'google'], required: true },
+        value: { type: String, required: true, default: '' },
+      },
+      bio: { type: String },
+      profileImageUrl: { type: String },
     },
-    bio: { type: String, maxlength: 500 },
-    profileImageUrl: { type: String }
-  },
-  authentication: {
-    authMethod: { type: String, enum: ['email', 'google', 'guest'], required: true },
-    isGuest: { type: Boolean, default: false },
-    googleId: { type: String, sparse: true, index: true },
-    emailVerified: { type: Boolean, default: false },
-    hasPassword: { type: Boolean, default: false }
-  },
-  gameStats: {
-    credits: { type: Number, default: 10, min: 0 },
-    maxCredits: { type: Number, default: 10, min: 1 },
-    totalPlayTime: { type: Number, default: 0 },
-    storiesCompleted: { type: Number, default: 0 },
-    lastCreditRefill: { type: Date, default: Date.now }
-  },
-  accountStatus: {
-    status: {
-      type: String,
-      enum: ['active', 'suspended', 'banned', 'under_review'],
-      default: 'active'
+    authentication: {
+      authMethod: { type: String, enum: ['email', 'google', 'guest'], required: true },
+      isGuest: { type: Boolean, default: false },
+      googleId: { type: String, sparse: true, index: true },
+      emailVerified: { type: Boolean, default: false },
+      hasPassword: { type: Boolean, default: false },
     },
-    reason: { type: String },
-    statusUntil: { type: Date }
+    accountStatus: {
+      status: {
+        type: String,
+        enum: ['active', 'suspended', 'banned', 'under_review', 'locked'],
+        default: 'active',
+        index: true,
+      },
+      reason: { type: String },
+      moderatedBy: { type: Schema.Types.ObjectId },
+      moderatedAt: { type: Date },
+      suspensionEndsAt: { type: Date },
+      lockType: { type: String, enum: ['manual', 'auto_security', 'auto_fraud'] },
+      lockExpiresAt: { type: Date },
+    },
+    gameStats: {
+      credits: { type: Number, default: 0 },
+      maxCredits: { type: Number, default: 0 },
+      lastCreditRefill: { type: Date },
+      totalStoriesPlayed: { type: Number, default: 0 },
+      totalEndingsUnlocked: { type: Number, default: 0 },
+      totalAvatarsUnlocked: { type: Number, default: 0 },
+      currentAvatarId: { type: String },
+      createdAt: { type: Date, default: Date.now },
+      lastLoginAt: { type: Date },
+    },
+    deletedAt: { type: Date, index: true, sparse: true },
+    deletedBy: { type: Schema.Types.ObjectId },
+    deleteReason: { type: String },
   },
-  security: {
-    failedLoginAttempts: { type: Number, default: 0 },
-    lastFailedLogin: { type: Date },
-    isLocked: { type: Boolean, default: false },
-    lockUntil: { type: Date }
-  }
-}, {
-  timestamps: true,
-  collection: 'users',
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
-});
+  { versionKey: false }
+);
 
-// Indexes
-UserSchema.index({ 'authentication.authMethod': 1, 'authentication.isGuest': 1 });
+UserSchema.index({ email: 1 }, { unique: true });
+UserSchema.index({ username: 1 }, { unique: true });
+UserSchema.index({ 'authentication.googleId': 1 }, { unique: true, sparse: true });
 UserSchema.index({ 'accountStatus.status': 1 });
-
-// Pre-save middleware for password hashing
-UserSchema.pre('save', async function(next) {
-  if (!this.isModified('passwordHash') || !this.passwordHash) {
-    return next();
-  }
-
-  try {
-    this.passwordHash = await bcrypt.hash(this.passwordHash, 12);
-    this.authentication.hasPassword = true;
-  } catch (error) {
-    return next(error);
-  }
-  next();
-});
-
-// Methods
-UserSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
-  if (!this.passwordHash) return false;
-  return bcrypt.compare(candidatePassword, this.passwordHash);
-};
-
-UserSchema.methods.toPublicJSON = function() {
-  const user = this.toObject();
-  delete user.passwordHash;
-  delete user.authentication.googleId;
-  return user;
-};
+UserSchema.index({ deletedAt: 1 }, { sparse: true });
 
 export default mongoose.model<IUser>('User', UserSchema);
 ```
 
-**Verification**: Create test script to verify each model
+**Verification**: Create test script to verify each model against the documented collections
 
 ---
 
@@ -415,25 +394,22 @@ export default mongoose.model<IUser>('User', UserSchema);
 **Estimated Time**: 30 minutes
 **Priority**: High
 
-**Create `packages/infrastructure/models/index.ts`**:
+**Create `packages/backend/src/infrastructure/models/index.ts`**:
 ```typescript
-// User models
-export { default as User } from './users/User';
-export { default as CreditTransaction } from './users/CreditTransaction';
-export { default as UserAchievement } from './users/UserAchievement';
-
-// Story models
-export { default as Story } from './stories/Story';
-export { default as StoryNode } from './stories/StoryNode';
-export { default as StoryAsset } from './stories/StoryAsset';
-export { default as Genre } from './stories/Genre';
-export { default as Review } from './stories/Review';
-
-// Achievement models
-export { default as Achievement } from './achievements/Achievement';
-export { default as Avatar } from './achievements/Avatar';
-
-// Re-export connection
+export { default as Achievement } from './Achievement';
+export { default as Avatar } from './Avatar';
+export { default as CreditTransaction } from './CreditTransaction';
+export { default as Genre } from './Genre';
+export { default as Review } from './Review';
+export { default as Story } from './Story';
+export { default as StoryAsset } from './StoryAsset';
+export { default as StoryGallery } from './StoryGallery';
+export { default as StoryNode } from './StoryNode';
+export { default as User } from './User';
+export { default as UserAchievement } from './UserAchievement';
+export { default as UserAvatar } from './UserAvatar';
+export { default as UserFavorite } from './UserFavorite';
+export { default as UserStoryProgress } from './UserStoryProgress';
 export { default as connectDB } from '../database/connection';
 ```
 
@@ -485,69 +461,43 @@ ADMIN_SESSION_SECRET="your-admin-session-secret"
 **Estimated Time**: 2 hours
 **Priority**: Medium
 
-**Create `packages/infrastructure/seeds/index.ts`**:
+**Create `packages/backend/src/infrastructure/seeds/index.ts`**:
 ```typescript
-import mongoose from 'mongoose';
 import { Genre, Achievement, Avatar } from '../models';
 import connectDB from '../database/connection';
 
+// Seed data aligns with docs in docs/database/collections
 const seedGenres = async () => {
   const genres = [
     {
-      name: 'Romance',
-      nameTh: 'โรแมนติก',
+      slug: 'romance',
+      name: 'โรแมนติก',
       description: 'เรื่องราวความรักและความสัมพันธ์',
+      storyCount: 0,
       isActive: true,
-      sortOrder: 1
+      sortOrder: 1,
+      createdAt: new Date(),
+      updatedAt: new Date()
     },
     {
-      name: 'Horror',
-      nameTh: 'สยองขวัญ',
+      slug: 'horror',
+      name: 'สยองขวัญ',
       description: 'เรื่องราวสยองขวัญและสร้างความกลัว',
+      storyCount: 0,
       isActive: true,
-      sortOrder: 2
+      sortOrder: 2,
+      createdAt: new Date(),
+      updatedAt: new Date()
     },
     {
-      name: 'Adventure',
-      nameTh: 'ผจญภัย',
+      slug: 'adventure',
+      name: 'ผจญภัย',
       description: 'เรื่องราวการเดินทางและผจญภัย',
+      storyCount: 0,
       isActive: true,
-      sortOrder: 3
-    },
-    {
-      name: 'Comedy',
-      nameTh: 'ตลก',
-      description: 'เรื่องราวตลกขบขัน',
-      isActive: true,
-      sortOrder: 4
-    },
-    {
-      name: 'Mystery',
-      nameTh:ลึกลับ',
-      description: 'เรื่องราวปริศนาและลึกลับ',
-      isActive: true,
-      sortOrder: 5
-    },
-    {
-      name: 'Fantasy',
-      nameTh: 'แฟนตาซี',
-      description: 'เรื่องราวเวทมนตร์และจินตนาการ',
-      isActive: true,
-      sortOrder: 6
-    },
-    {
-      name: 'Sci-Fi',
-      nameTh: 'วิทยาศาสตร์',
-      description: 'เรื่องราววิทยาศาสตร์และอนาคต',
-      isActive: true,
-      sortOrder: 7
-    },
-    {
-      name: 'Drama',
-      nameTh: 'ดราม่า',
-      description: 'เรื่องราวชีวิตและสังคม',
-      isActive: true,
-      sortOrder: 8
+      sortOrder: 3,
+      createdAt: new Date(),
+      updatedAt: new Date()
     }
   ];
 
@@ -563,37 +513,64 @@ const seedGenres = async () => {
 const seedAvatars = async () => {
   const avatars = [
     {
+      avatarId: 'default_avatar',
       name: 'Default Avatar',
       description: 'Default user avatar',
       imageUrl: '/avatars/default.png',
-      unlockCondition: {
-        type: 'automatic',
-        value: null
-      },
+      thumbnailUrl: '/avatars/default-thumb.png',
+      unlockType: 'free',
+      unlockConditions: {},
       isActive: true,
-      sortOrder: 1
+      isLimited: false,
+      isHidden: false,
+      rarity: 'common',
+      sortOrder: 1,
+      totalUnlocks: 0,
+      unlockRate: 0,
+      category: 'default',
+      tags: ['starter'],
+      createdAt: new Date(),
+      updatedAt: new Date()
     },
     {
+      avatarId: 'story_master',
       name: 'Story Master',
       description: 'Complete 5 stories',
       imageUrl: '/avatars/story-master.png',
-      unlockCondition: {
-        type: 'story_completion',
-        value: 5
-      },
+      thumbnailUrl: '/avatars/story-master-thumb.png',
+      unlockType: 'story_completion',
+      unlockConditions: { storyId: '', completionRate: 100, playthroughCount: 5 },
       isActive: true,
-      sortOrder: 2
+      isLimited: false,
+      isHidden: false,
+      rarity: 'rare',
+      sortOrder: 2,
+      totalUnlocks: 0,
+      unlockRate: 0,
+      category: 'milestone',
+      tags: ['completion'],
+      createdAt: new Date(),
+      updatedAt: new Date()
     },
     {
+      avatarId: 'reviewer',
       name: 'Reviewer',
       description: 'Write 3 reviews',
       imageUrl: '/avatars/reviewer.png',
-      unlockCondition: {
-        type: 'review_count',
-        value: 3
-      },
+      thumbnailUrl: '/avatars/reviewer-thumb.png',
+      unlockType: 'achievement',
+      unlockConditions: { achievementId: 'write_3_reviews' },
       isActive: true,
-      sortOrder: 3
+      isLimited: false,
+      isHidden: false,
+      rarity: 'common',
+      sortOrder: 3,
+      totalUnlocks: 0,
+      unlockRate: 0,
+      category: 'social',
+      tags: ['reviews'],
+      createdAt: new Date(),
+      updatedAt: new Date()
     }
   ];
 
@@ -609,38 +586,32 @@ const seedAvatars = async () => {
 const seedAchievements = async () => {
   const achievements = [
     {
-      name: 'First Story',
+      achievementId: 'first_story',
+      title: 'First Story',
       description: 'Complete your first story',
+      icon: '📖',
       category: 'story',
-      points: 10,
-      badgeUrl: '/achievements/first-story.png',
-      unlockCondition: {
-        type: 'story_completion',
-        value: 1
-      },
-      rewards: {
-        credits: 5,
-        avatarUnlock: null
-      },
+      type: 'automatic',
+      conditions: { storiesCompleted: 1 },
+      rewards: { creditBonus: 5, maxCreditIncrease: 0, avatarUnlocks: [] },
+      rarity: 'common',
       isActive: true,
-      rarity: 'common'
+      sortOrder: 1,
+      createdAt: new Date()
     },
     {
-      name: 'Explorer',
+      achievementId: 'story_explorer_10',
+      title: 'Explorer',
       description: 'Complete 10 different stories',
+      icon: '🧭',
       category: 'story',
-      points: 50,
-      badgeUrl: '/achievements/explorer.png',
-      unlockCondition: {
-        type: 'unique_stories',
-        value: 10
-      },
-      rewards: {
-        credits: 20,
-        avatarUnlock: 'Explorer Avatar'
-      },
+      type: 'automatic',
+      conditions: { storiesCompleted: 10 },
+      rewards: { creditBonus: 20, maxCreditIncrease: 0, avatarUnlocks: ['story_master'] },
+      rarity: 'rare',
       isActive: true,
-      rarity: 'rare'
+      sortOrder: 2,
+      createdAt: new Date()
     }
   ];
 
@@ -682,17 +653,12 @@ export { runSeeds, seedGenres, seedAvatars, seedAchievements };
 ```json
 {
   "scripts": {
-    "seed": "tsx packages/infrastructure/seeds/index.ts",
-    "seed:genres": "tsx -e \"import { seedGenres } from './packages/infrastructure/seeds'; seedGenres();\"",
-    "seed:avatars": "tsx -e \"import { seedAvatars } from './packages/infrastructure/seeds'; seedAvatars();\"",
-    "seed:achievements": "tsx -e \"import { seedAchievements } from './packages/infrastructure/seeds'; seedAchievements();\""
+    "seed": "tsx packages/backend/src/infrastructure/seeds/index.ts",
+    "seed:genres": "tsx -e \"import { seedGenres } from './packages/backend/src/infrastructure/seeds'; seedGenres();\"",
+    "seed:avatars": "tsx -e \"import { seedAvatars } from './packages/backend/src/infrastructure/seeds'; seedAvatars();\"",
+    "seed:achievements": "tsx -e \"import { seedAchievements } from './packages/backend/src/infrastructure/seeds'; seedAchievements();\""
   }
 }
-```
-
-**Install tsx for TypeScript execution**:
-```bash
-npm install --save-dev tsx
 ```
 
 **Verification**: Run `npm run seed` and check MongoDB for seeded data
@@ -703,7 +669,7 @@ npm install --save-dev tsx
 **Estimated Time**: 1 hour
 **Priority**: Medium
 
-**Create `packages/shared/types/index.ts`**:
+**Create `packages/shared/src/types/index.ts`**:
 ```typescript
 // User related types
 export interface UserPublic {
@@ -721,7 +687,10 @@ export interface UserPublic {
   gameStats: {
     credits: number;
     maxCredits: number;
-    storiesCompleted: number;
+    totalStoriesPlayed: number;
+    totalEndingsUnlocked: number;
+    totalAvatarsUnlocked: number;
+    currentAvatarId?: string;
   };
 }
 
@@ -730,25 +699,48 @@ export interface StoryPublic {
   id: string;
   title: string;
   description: string;
-  genre: {
-    id: string;
-    name: string;
-    nameTh: string;
-  };
   metadata: {
-    coverImageUrl: string;
-    estimatedPlayTime: number;
-    totalChoices: number;
-    totalEndings: number;
+    genre: string;
+    tags: string[];
+    author: string;
+    createdAt?: string;
+    publishedAt?: string;
+    isPublished: boolean;
+    isComingSoon: boolean;
+    launchDate?: string;
+    contentRating: {
+      ageRating: number;
+      violenceLevel: 'none' | 'mild' | 'moderate' | 'high';
+      contentWarnings?: string[];
+    };
+  };
+  media: {
+    coverImageAssetId?: string;
+    headerImageAssetId?: string;
+    coverVideoAssetId?: string;
+    bgMusicAssetId?: string;
+    coverImageUrl?: string;
+    headerImageUrl?: string;
+    coverVideoUrl?: string;
+    bgMusicUrl?: string;
+    trailerUrl?: string;
+  };
+  gallery: {
+    imageIds?: string[];
+    totalImages?: number;
+    featuredImageId?: string;
   };
   stats: {
     totalPlayers: number;
     averageRating: number;
-    completionRate: number;
+    totalRatings: number;
+    averagePlaytime: number;
+    estimatedDuration: string;
+    totalEndings: number;
+    totalChoices: number;
   };
-  contentRating: {
-    ageRating: number;
-    violenceLevel: string;
+  content: {
+    startingNodeId: string;
   };
 }
 
@@ -831,7 +823,7 @@ After completing all tasks, verify:
 ### Infrastructure
 - [ ] MongoDB container runs: `docker compose up -d mongo`
 - [ ] Database connection works: Test with connection script
-- [ ] All 15 models are created and importable
+- [ ] All 14 documented models are created and importable
 - [ ] Seed script runs successfully
 - [ ] Environment variables are loaded correctly
 
@@ -881,12 +873,12 @@ Once Milestone 1.1 is complete:
 
 | Path | Purpose |
 |------|---------|
-| `packages/infrastructure/database/connection.ts` | MongoDB connection management |
-| `packages/infrastructure/models/users/User.ts` | Main user schema and model |
-| `packages/infrastructure/models/stories/Story.ts` | Story schema and model |
-| `packages/infrastructure/models/index.ts` | Central model exports |
-| `packages/infrastructure/seeds/index.ts` | Database initialization |
-| `packages/shared/types/index.ts` | Shared TypeScript types |
+| `packages/backend/src/infrastructure/database/connection.ts` | MongoDB connection management |
+| `packages/backend/src/infrastructure/models/User.ts` | Main user schema and model |
+| `packages/backend/src/infrastructure/models/Story.ts` | Story schema and model |
+| `packages/backend/src/infrastructure/models/index.ts` | Central model exports |
+| `packages/backend/src/infrastructure/seeds/index.ts` | Database initialization |
+| `packages/shared/src/types/index.ts` | Shared TypeScript types |
 | `apps/admin/vitest.config.ts` | Admin app testing configuration |
 
 ---
@@ -903,13 +895,15 @@ Once Milestone 1.1 is complete:
 
 ## 📝 Notes & Considerations
 
-1. **Database Design**: All schemas should follow the documented structure in `docs/database/collections/`
-2. **Security**: Password hashing implemented with bcrypt, proper indexing for performance
-3. **Type Safety**: Leverage TypeScript throughout for better developer experience
-4. **Testing**: Each model should have basic tests created
-5. **Environment**: Keep production and development configurations separate
-6. **Error Handling**: Implement proper error handling for database operations
-7. **Performance**: Add appropriate indexes for frequently queried fields
+1. **Simplified Architecture**: Following the new simplified structure with consolidated backend package containing all business logic
+2. **Database Design**: All schemas should follow the documented structure in `docs/database/collections/`
+3. **Security**: Password hashing implemented with bcrypt, proper indexing for performance
+4. **Type Safety**: Leverage TypeScript throughout for better developer experience
+5. **Testing**: Each model should have basic tests created
+6. **Environment**: Keep production and development configurations separate
+7. **Error Handling**: Implement proper error handling for database operations
+8. **Performance**: Add appropriate indexes for frequently queried fields
+9. **Workspace Dependencies**: Backend package depends on shared package for types and constants
 
 ---
 
