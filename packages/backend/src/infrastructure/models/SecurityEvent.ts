@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, HydratedDocument, Schema } from 'mongoose';
 
 // Security event type enum
 export enum SecurityEventType {
@@ -77,6 +77,8 @@ export interface ISecurityEvent extends Document {
   resolvedAt?: Date;
   resolutionNotes?: string;
   timestamp: Date;
+  isActive?: boolean;
+  requiresAttention?: boolean;
 }
 
 // Schema
@@ -179,11 +181,10 @@ securityEventSchema.index({ 'eventDetails.riskScore': -1 });
 securityEventSchema.index({ timestamp: -1 });
 
 // Middleware
-securityEventSchema.pre('save', function (next) {
+securityEventSchema.pre('save', function (this: HydratedDocument<ISecurityEvent>) {
   if (this.isModified('resolvedAt') && this.resolvedAt && !this.resolvedBy) {
     this.resolvedBy = undefined; // Ensure resolvedBy is set when resolvedAt is set
   }
-  next();
 });
 
 // Virtual for checking if event is active (not resolved)

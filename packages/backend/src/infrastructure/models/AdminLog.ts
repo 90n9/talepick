@@ -1,4 +1,4 @@
-import mongoose, { Document, FilterQuery, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from 'mongoose';
 
 // Action constants
 export const ADMIN_ACTIONS = {
@@ -212,7 +212,7 @@ adminLogSchema.statics.getComplianceAuditTrail = function (
 ) {
   const cutoffDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
 
-  const query: FilterQuery<IAdminLog> = {
+  const query: Record<string, unknown> = {
     timestamp: { $gte: cutoffDate },
   };
 

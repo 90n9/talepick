@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document, Types, HydratedDocument } from 'mongoose';
 
 export interface IReview extends Document {
   userId: Types.ObjectId; // references Users
@@ -156,13 +156,11 @@ ReviewSchema.methods.updateContent = function (newContent: string) {
 };
 
 // Pre-save middleware
-ReviewSchema.pre('save', function (next) {
+ReviewSchema.pre('save', function (this: HydratedDocument<IReview>) {
   // Validate rating range
   if (this.rating < 1 || this.rating > 5) {
-    return next(new Error('Rating must be between 1 and 5'));
+    throw new Error('Rating must be between 1 and 5');
   }
-
-  next();
 });
 
 // Static methods

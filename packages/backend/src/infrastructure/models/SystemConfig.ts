@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, HydratedDocument, Schema } from 'mongoose';
 
 // System config category enum
 export enum SystemConfigCategory {
@@ -121,12 +121,11 @@ systemConfigSchema.index({ description: 'text' });
 systemConfigSchema.index({ createdAt: -1 });
 
 // Middleware
-systemConfigSchema.pre('save', function (next) {
+systemConfigSchema.pre('save', function (this: HydratedDocument<ISystemConfig>) {
   if (this.isModified('value') || this.isModified('description') || this.isModified('validation')) {
     this.lastModifiedAt = new Date();
     this.version += 1;
   }
-  next();
 });
 
 // Virtual for checking if config is publicly accessible

@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, HydratedDocument, Schema } from 'mongoose';
 
 // Admin role enum
 export enum AdminRole {
@@ -224,11 +224,10 @@ adminAccountSchema.index({ lastActive: 1 });
 adminAccountSchema.index({ createdAt: -1 });
 
 // Middleware
-adminAccountSchema.pre('save', function (next) {
+adminAccountSchema.pre('save', function (this: HydratedDocument<IAdminAccount>) {
   if (this.isModified('lastLogin') && this.lastLogin) {
     this.lastActive = this.lastLogin;
   }
-  next();
 });
 
 // Virtual for checking if admin is active

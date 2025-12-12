@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, HydratedDocument } from 'mongoose';
 
 export interface IUnlockConditions {
   achievementId?: string;
@@ -35,6 +35,14 @@ export interface IAvatar extends Document {
   artist: string;
   createdAt: Date;
   updatedAt: Date;
+  checkUnlock(userStats: {
+    achievements?: string[];
+    completedStories?: string[];
+    specialEvents?: string[];
+    level?: number;
+  }): boolean;
+  isAvailable(): boolean;
+  recordUnlock(): Promise<this>;
 }
 
 const AvatarSchema: Schema = new Schema(
@@ -268,13 +276,11 @@ AvatarSchema.statics.getMostPopularAvatars = async function (limit = 20) {
 };
 
 // Pre-save middleware
-AvatarSchema.pre('save', function (next) {
+AvatarSchema.pre('save', function (this: HydratedDocument<IAvatar>) {
   // Set first unlock date if total unlocks is positive but first unlocked at is not set
   if (this.totalUnlocks > 0 && !this.firstUnlockedAt) {
     this.firstUnlockedAt = new Date();
   }
-
-  next();
 });
 
 export default mongoose.model<IAvatar>('Avatar', AvatarSchema);

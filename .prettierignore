@@ -57,3 +57,14 @@ data/
 
 # Docker
 .dockerignore
+
+# Storybook build outputs
+.out
+.storybook-out
+
+# Nuxt.js build / generate output
+.nuxt
+
+# Temporary folders
+tmp/
+temp/

@@ -63,8 +63,7 @@ export const MOCK_STORIES: Story[] = [
   {
     id: '4',
     title: 'ปล้นระห่ำเมือง (Midnight Heist)',
-    description:
-      'การปล้นธนาคารที่สมบูรณ์แบบต้องการทีมที่สมบูรณ์แบบ แต่มีใครบางคนเป็นหนอนบ่อนไส้',
+    description: 'การปล้นธนาคารที่สมบูรณ์แบบต้องการทีมที่สมบูรณ์แบบ แต่มีใครบางคนเป็นหนอนบ่อนไส้',
     genre: 'ระทึกขวัญ',
     coverImage: 'https://picsum.photos/seed/heist/800/450',
     rating: 4.2,

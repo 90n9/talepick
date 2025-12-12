@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document, Types, HydratedDocument } from 'mongoose';
 
 export interface IUrls {
   original?: string; // Full resolution image URL
@@ -244,18 +244,17 @@ StoryGallerySchema.methods.recordClick = function () {
   return this.save();
 };
 
-StoryGallerySchema.methods.setAsFeatured = function () {
+StoryGallerySchema.methods.setAsFeatured = function (this: HydratedDocument<IStoryGallery>) {
+  const Model = this.constructor as mongoose.Model<IStoryGallery>;
   // First, unset featured flag on all other images in this story
-  return this.constructor
-    .updateMany(
-      { storyId: this.storyId, galleryImageId: { $ne: this.galleryImageId } },
-      { $set: { 'display.isFeatured': false } }
-    )
-    .then(() => {
-      // Then set this image as featured
-      this.display.isFeatured = true;
-      return this.save();
-    });
+  return Model.updateMany(
+    { storyId: this.storyId, galleryImageId: { $ne: this.galleryImageId } },
+    { $set: { 'display.isFeatured': false } }
+  ).then(() => {
+    // Then set this image as featured
+    this.display.isFeatured = true;
+    return this.save();
+  });
 };
 
 // Static methods

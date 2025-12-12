@@ -54,6 +54,10 @@ export interface IUserSession extends Document {
   lastActivity: Date;
   createdAt: Date;
   expiresAt: Date;
+  isExpired?: boolean;
+  isValid?: boolean;
+  duration?: number;
+  timeUntilExpiration?: number;
 }
 
 // Schema
@@ -172,12 +176,11 @@ userSessionSchema.index({ userId: 1, createdAt: -1 });
 userSessionSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 // Middleware
-userSessionSchema.pre('save', function (next) {
+userSessionSchema.pre('save', async function () {
   if (this.isModified('lastActivity') && this.lastActivity) {
     // Optionally extend expiration on activity (7 days from last activity)
     this.expiresAt = new Date(this.lastActivity.getTime() + 7 * 24 * 60 * 60 * 1000);
   }
-  next();
 });
 
 // Virtual for checking if session is expired
@@ -208,7 +211,7 @@ userSessionSchema.statics.validateSession = function (sessionToken: string) {
     expiresAt: { $gt: new Date() },
   })
     .populate('userId', 'username email profile displayName')
-    .then((session) => {
+    .then((session: IUserSession | null) => {
       if (session) {
         // Update last activity
         return this.findByIdAndUpdate(
