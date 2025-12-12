@@ -21,7 +21,7 @@ export interface IAvatarInfo {
   thumbnailUrl: string;
 }
 
-export interface IUserAvatars extends Document {
+export interface IUserAvatar extends Document {
   userId: Types.ObjectId; // references Users
   avatarId: string; // references Avatars.avatarId
 
@@ -117,7 +117,7 @@ const AvatarInfoSchema = new Schema(
   { _id: false }
 );
 
-const UserAvatarsSchema: Schema = new Schema(
+const UserAvatarSchema: Schema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -161,14 +161,14 @@ const UserAvatarsSchema: Schema = new Schema(
 );
 
 // Indexes
-UserAvatarsSchema.index({ userId: 1, avatarId: 1 }, { unique: true });
-UserAvatarsSchema.index({ userId: 1, 'usage.isCurrentlyActive': 1 });
-UserAvatarsSchema.index({ userId: 1, unlockedAt: -1 });
-UserAvatarsSchema.index({ avatarId: 1, unlockedAt: -1 });
-UserAvatarsSchema.index({ 'avatarInfo.rarity': 1 });
+UserAvatarSchema.index({ userId: 1, avatarId: 1 }, { unique: true });
+UserAvatarSchema.index({ userId: 1, 'usage.isCurrentlyActive': 1 });
+UserAvatarSchema.index({ userId: 1, unlockedAt: -1 });
+UserAvatarSchema.index({ avatarId: 1, unlockedAt: -1 });
+UserAvatarSchema.index({ 'avatarInfo.rarity': 1 });
 
 // Methods
-UserAvatarsSchema.methods.setActive = async function () {
+UserAvatarSchema.methods.setActive = async function () {
   // First, deactivate all other avatars for this user
   await this.constructor.updateMany(
     { userId: this.userId },
@@ -188,13 +188,13 @@ UserAvatarsSchema.methods.setActive = async function () {
   return this.save();
 };
 
-UserAvatarsSchema.methods.recordUsage = async function () {
+UserAvatarSchema.methods.recordUsage = async function () {
   this.usage.timesUsed = (this.usage.timesUsed || 0) + 1;
   this.usage.lastUsedAt = new Date();
   return this.save();
 };
 
-UserAvatarsSchema.methods.getUsageStats = function () {
+UserAvatarSchema.methods.getUsageStats = function () {
   return {
     timesUsed: this.usage.timesUsed || 0,
     lastUsedAt: this.usage.lastUsedAt,
@@ -202,14 +202,14 @@ UserAvatarsSchema.methods.getUsageStats = function () {
 };
 
 // Static methods
-UserAvatarsSchema.statics.getUserCurrentAvatar = function (userId: Types.ObjectId) {
+UserAvatarSchema.statics.getUserCurrentAvatar = function (userId: Types.ObjectId) {
   return this.findOne({
     userId,
     'usage.isCurrentlyActive': true,
   });
 };
 
-UserAvatarsSchema.statics.getUserAvatarCollection = function (
+UserAvatarSchema.statics.getUserAvatarCollection = function (
   userId: Types.ObjectId,
   skip = 0,
   limit = 50
@@ -217,7 +217,7 @@ UserAvatarsSchema.statics.getUserAvatarCollection = function (
   return this.find({ userId }).sort({ unlockedAt: -1 }).skip(skip).limit(limit);
 };
 
-UserAvatarsSchema.statics.getUserAvatarsByRarity = function (
+UserAvatarSchema.statics.getUserAvatarsByRarity = function (
   userId: Types.ObjectId,
   rarity: string
 ) {
@@ -227,7 +227,7 @@ UserAvatarsSchema.statics.getUserAvatarsByRarity = function (
   }).sort({ 'usage.timesUsed': -1 });
 };
 
-UserAvatarsSchema.statics.unlockAvatar = function (
+UserAvatarSchema.statics.unlockAvatar = function (
   userId: Types.ObjectId,
   avatarId: string,
   unlockSource: IUnlockSource,
@@ -241,11 +241,11 @@ UserAvatarsSchema.statics.unlockAvatar = function (
   });
 };
 
-UserAvatarsSchema.statics.hasAvatar = function (userId: Types.ObjectId, avatarId: string) {
+UserAvatarSchema.statics.hasAvatar = function (userId: Types.ObjectId, avatarId: string) {
   return this.findOne({ userId, avatarId });
 };
 
-UserAvatarsSchema.statics.getMostPopularAvatars = function (limit = 20) {
+UserAvatarSchema.statics.getMostPopularAvatars = function (limit = 20) {
   return this.aggregate([
     {
       $group: {
@@ -271,7 +271,7 @@ UserAvatarsSchema.statics.getMostPopularAvatars = function (limit = 20) {
   ]);
 };
 
-UserAvatarsSchema.statics.getAvatarUnlockAnalytics = function () {
+UserAvatarSchema.statics.getAvatarUnlockAnalytics = function () {
   return this.aggregate([
     {
       $group: {
@@ -298,7 +298,7 @@ UserAvatarsSchema.statics.getAvatarUnlockAnalytics = function () {
   ]);
 };
 
-UserAvatarsSchema.statics.getUserAvatarTimeline = function (userId: Types.ObjectId) {
+UserAvatarSchema.statics.getUserAvatarTimeline = function (userId: Types.ObjectId) {
   return this.find({ userId })
     .select({
       avatarId: 1,
@@ -311,7 +311,7 @@ UserAvatarsSchema.statics.getUserAvatarTimeline = function (userId: Types.Object
     .sort({ unlockedAt: -1 });
 };
 
-UserAvatarsSchema.statics.getUserAvatarStatistics = function (userId: Types.ObjectId) {
+UserAvatarSchema.statics.getUserAvatarStatistics = function (userId: Types.ObjectId) {
   return this.aggregate([
     { $match: { userId } },
     {
@@ -375,7 +375,7 @@ UserAvatarsSchema.statics.getUserAvatarStatistics = function (userId: Types.Obje
   ]);
 };
 
-UserAvatarsSchema.statics.adminGrantAvatar = function (
+UserAvatarSchema.statics.adminGrantAvatar = function (
   userId: Types.ObjectId,
   avatarId: string,
   avatarInfo: IAvatarInfo,
@@ -393,4 +393,5 @@ UserAvatarsSchema.statics.adminGrantAvatar = function (
   );
 };
 
-export default mongoose.model<IUserAvatars>('UserAvatars', UserAvatarsSchema);
+export const UserAvatar = mongoose.model<IUserAvatar>('UserAvatar', UserAvatarSchema);
+export default UserAvatar;

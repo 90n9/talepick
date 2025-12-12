@@ -258,16 +258,16 @@ packages/backend/src/infrastructure/models/
 ├── ReviewVote.ts
 ├── SecurityEvent.ts
 ├── Story.ts
-├── StoryAssets.ts
+├── StoryAsset.ts
 ├── StoryFlag.ts
 ├── StoryGallery.ts
 ├── StoryNode.ts
 ├── SystemConfig.ts
 ├── User.ts
-├── UserAchievement.ts              # ⚠️ Currently: UserAchievements.ts (needs rename)
-├── UserAvatar.ts                   # ⚠️ Currently: UserAvatars.ts (needs rename)
-├── UserFavorite.ts                 # ⚠️ Currently: UserFavorites.ts (needs rename)
-├── UserSession.ts                  # ⚠️ Currently: UserSessions.ts (needs rename)
+├── UserAchievement.ts
+├── UserAvatar.ts
+├── UserFavorite.ts
+├── UserSession.ts
 ├── UserStoryProgress.ts
 └── index.ts
 ```
@@ -289,18 +289,18 @@ packages/backend/src/infrastructure/models/
 ### Multi-Word Models (Manual `lowercase_with_underscores` Collections)
 **Story System Collections**:
 8. **StoryNode** (`StoryNode.ts`) - collection: `story_nodes`
-9. **StoryAssets** (`StoryAssets.ts`) - collection: `story_assets`
+9. **StoryAsset** (`StoryAsset.ts`) - collection: `story_assets`
 10. **StoryGallery** (`StoryGallery.ts`) - collection: `story_gallery`
 
 **Transaction Collections**:
 11. **CreditTransaction** (`CreditTransaction.ts`) - collection: `credit_transactions`
 
 **User-Related Collections**:
-12. **UserAchievement** (`UserAchievement.ts`) ⚠️ *Currently: UserAchievements.ts* - collection: `user_achievements`
-13. **UserAvatar** (`UserAvatar.ts`) ⚠️ *Currently: UserAvatars.ts* - collection: `user_avatars`
-14. **UserFavorite** (`UserFavorite.ts`) ⚠️ *Currently: UserFavorites.ts* - collection: `user_favorites`
+12. **UserAchievement** (`UserAchievement.ts`) - collection: `user_achievements`
+13. **UserAvatar** (`UserAvatar.ts`) - collection: `user_avatars`
+14. **UserFavorite** (`UserFavorite.ts`) - collection: `user_favorites`
 15. **UserStoryProgress** (`UserStoryProgress.ts`) - collection: `user_story_progress`
-16. **UserSession** (`UserSession.ts`) ⚠️ *Currently: UserSessions.ts* - collection: `user_sessions`
+16. **UserSession** (`UserSession.ts`) - collection: `user_sessions`
 
 **Admin & Security Collections**:
 17. **AdminAccount** (`AdminAccount.ts`) - collection: `admin_accounts`
@@ -477,7 +477,7 @@ export default mongoose.model<IUserAchievement>('UserAchievement', UserAchieveme
 // Result: Collection name = 'user_achievements' (manual specification)
 ```
 
-**⚠️ Important Note**: The model file should be named `UserAchievement.ts` (singular), not `UserAchievements.ts` (plural). Some existing files use incorrect plural naming and need to be renamed.
+**Important**: Model file names stay singular (e.g., `UserAchievement.ts`) while collections remain plural with underscores (e.g., `user_achievements`).
 
 **Verification**: Create test script to verify each model against the documented collections
 
@@ -494,7 +494,7 @@ export { default as User } from './User';
 export { default as Genre } from './Genre';
 export { default as Story } from './Story';
 export { default as StoryNode } from './StoryNode';
-export { default as StoryAssets } from './StoryAssets';
+export { default as StoryAsset } from './StoryAsset';
 export { default as StoryGallery } from './StoryGallery';
 export { default as Review } from './Review';
 
@@ -503,12 +503,12 @@ export { default as Achievement } from './Achievement';
 export { default as Avatar } from './Avatar';
 export { default as CreditTransaction } from './CreditTransaction';
 
-// User-Related Collections (⚠️ File names need updating to singular form)
-export { default as UserAchievement } from './UserAchievement';      // Currently: UserAchievements.ts
-export { default as UserAvatar } from './UserAvatar';                // Currently: UserAvatars.ts
-export { default as UserFavorite } from './UserFavorite';            // Currently: UserFavorites.ts
+// User-Related Collections
+export { default as UserAchievement } from './UserAchievement';
+export { default as UserAvatar } from './UserAvatar';
+export { default as UserFavorite } from './UserFavorite';
 export { default as UserStoryProgress } from './UserStoryProgress';
-export { default as UserSession } from './UserSession';              // Currently: UserSessions.ts
+export { default as UserSession } from './UserSession';
 
 // Admin & Security Collections
 export { default as AdminAccount } from './AdminAccount';

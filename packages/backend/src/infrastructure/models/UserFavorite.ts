@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
 
-export interface IUserFavorites extends Document {
+export interface IUserFavorite extends Document {
   userId: Types.ObjectId; // references Users
   storyId: Types.ObjectId; // references Stories
 
@@ -11,7 +11,7 @@ export interface IUserFavorites extends Document {
   getFavoriteAge(): number; // days since favorited
 }
 
-const UserFavoritesSchema: Schema = new Schema(
+const UserFavoriteSchema: Schema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -38,41 +38,41 @@ const UserFavoritesSchema: Schema = new Schema(
 );
 
 // Indexes
-UserFavoritesSchema.index({ userId: 1, storyId: 1 }, { unique: true });
-UserFavoritesSchema.index({ userId: 1, addedAt: -1 });
-UserFavoritesSchema.index({ storyId: 1 });
-UserFavoritesSchema.index({ addedAt: -1 });
+UserFavoriteSchema.index({ userId: 1, storyId: 1 }, { unique: true });
+UserFavoriteSchema.index({ userId: 1, addedAt: -1 });
+UserFavoriteSchema.index({ storyId: 1 });
+UserFavoriteSchema.index({ addedAt: -1 });
 
 // Methods
-UserFavoritesSchema.methods.getFavoriteAge = function (): number {
+UserFavoriteSchema.methods.getFavoriteAge = function (): number {
   const now = new Date();
   const diffInMs = now.getTime() - this.addedAt.getTime();
   return Math.floor(diffInMs / (1000 * 60 * 60 * 24)); // days
 };
 
 // Static methods
-UserFavoritesSchema.statics.addToFavorites = function (
+UserFavoriteSchema.statics.addToFavorites = function (
   userId: Types.ObjectId,
   storyId: Types.ObjectId
 ) {
   return this.create({ userId, storyId });
 };
 
-UserFavoritesSchema.statics.removeFromFavorites = function (
+UserFavoriteSchema.statics.removeFromFavorites = function (
   userId: Types.ObjectId,
   storyId: Types.ObjectId
 ) {
   return this.deleteOne({ userId, storyId });
 };
 
-UserFavoritesSchema.statics.isFavorited = function (
+UserFavoriteSchema.statics.isFavorited = function (
   userId: Types.ObjectId,
   storyId: Types.ObjectId
 ) {
   return this.findOne({ userId, storyId });
 };
 
-UserFavoritesSchema.statics.getUserFavorites = function (
+UserFavoriteSchema.statics.getUserFavorites = function (
   userId: Types.ObjectId,
   skip = 0,
   limit = 20,
@@ -113,7 +113,7 @@ UserFavoritesSchema.statics.getUserFavorites = function (
   }
 };
 
-UserFavoritesSchema.statics.getUserFavoritesWithProgress = function (userId: Types.ObjectId) {
+UserFavoriteSchema.statics.getUserFavoritesWithProgress = function (userId: Types.ObjectId) {
   return this.aggregate([
     { $match: { userId } },
     {
@@ -168,7 +168,7 @@ UserFavoritesSchema.statics.getUserFavoritesWithProgress = function (userId: Typ
   ]);
 };
 
-UserFavoritesSchema.statics.getUserFavoritesByGenre = function (
+UserFavoriteSchema.statics.getUserFavoritesByGenre = function (
   userId: Types.ObjectId,
   genre: string
 ) {
@@ -197,7 +197,7 @@ UserFavoritesSchema.statics.getUserFavoritesByGenre = function (
   ]);
 };
 
-UserFavoritesSchema.statics.getMostFavoritedStories = function (
+UserFavoriteSchema.statics.getMostFavoritedStories = function (
   limit = 20,
   timeRange?: { start: Date; end: Date }
 ) {
@@ -244,11 +244,11 @@ UserFavoritesSchema.statics.getMostFavoritedStories = function (
   ]);
 };
 
-UserFavoritesSchema.statics.getStoryFavoriteCount = function (storyId: Types.ObjectId) {
+UserFavoriteSchema.statics.getStoryFavoriteCount = function (storyId: Types.ObjectId) {
   return this.countDocuments({ storyId });
 };
 
-UserFavoritesSchema.statics.getUserFavoriteStatistics = function (userId: Types.ObjectId) {
+UserFavoriteSchema.statics.getUserFavoriteStatistics = function (userId: Types.ObjectId) {
   return this.aggregate([
     { $match: { userId } },
     {
@@ -288,7 +288,7 @@ UserFavoritesSchema.statics.getUserFavoriteStatistics = function (userId: Types.
   ]);
 };
 
-UserFavoritesSchema.statics.getRecentlyFavoritedStories = function (
+UserFavoriteSchema.statics.getRecentlyFavoritedStories = function (
   userId: Types.ObjectId,
   limit = 10
 ) {
@@ -321,7 +321,7 @@ UserFavoritesSchema.statics.getRecentlyFavoritedStories = function (
   ]);
 };
 
-UserFavoritesSchema.statics.getFavoriteAnalytics = function (timeRange?: {
+UserFavoriteSchema.statics.getFavoriteAnalytics = function (timeRange?: {
   start: Date;
   end: Date;
 }) {
@@ -360,12 +360,13 @@ UserFavoritesSchema.statics.getFavoriteAnalytics = function (timeRange?: {
   ]);
 };
 
-UserFavoritesSchema.statics.cleanupDeletedStories = function (deletedStoryIds: Types.ObjectId[]) {
+UserFavoriteSchema.statics.cleanupDeletedStories = function (deletedStoryIds: Types.ObjectId[]) {
   return this.deleteMany({ storyId: { $in: deletedStoryIds } });
 };
 
-UserFavoritesSchema.statics.cleanupDeletedUsers = function (deletedUserIds: Types.ObjectId[]) {
+UserFavoriteSchema.statics.cleanupDeletedUsers = function (deletedUserIds: Types.ObjectId[]) {
   return this.deleteMany({ userId: { $in: deletedUserIds } });
 };
 
-export default mongoose.model<IUserFavorites>('UserFavorites', UserFavoritesSchema);
+export const UserFavorite = mongoose.model<IUserFavorite>('UserFavorite', UserFavoriteSchema);
+export default UserFavorite;

@@ -25,7 +25,7 @@ export interface IModeration {
   notes?: string;
 }
 
-export interface IStoryAssets extends Document {
+export interface IStoryAsset extends Document {
   assetId: string; // unique identifier
   storyId: Types.ObjectId; // references Stories
 
@@ -143,7 +143,7 @@ const ModerationSchema = new Schema(
   { _id: false }
 );
 
-const StoryAssetsSchema: Schema = new Schema(
+const StoryAssetSchema: Schema = new Schema(
   {
     assetId: {
       type: String,
@@ -257,18 +257,18 @@ const StoryAssetsSchema: Schema = new Schema(
 );
 
 // Indexes
-StoryAssetsSchema.index({ assetId: 1 }, { unique: true });
-StoryAssetsSchema.index({ storyId: 1, type: 1 });
-StoryAssetsSchema.index({ type: 1, 'moderation.status': 1 });
-StoryAssetsSchema.index({ uploadedBy: 1, uploadSource: 1 });
-StoryAssetsSchema.index({ tags: 1 });
-StoryAssetsSchema.index({ createdAt: -1 });
-StoryAssetsSchema.index({ 'moderation.status': 1, status: 1 });
-StoryAssetsSchema.index({ storyId: 1, type: 1, 'moderation.status': 1 });
-StoryAssetsSchema.index({ type: 1, uploadSource: 1 });
+StoryAssetSchema.index({ assetId: 1 }, { unique: true });
+StoryAssetSchema.index({ storyId: 1, type: 1 });
+StoryAssetSchema.index({ type: 1, 'moderation.status': 1 });
+StoryAssetSchema.index({ uploadedBy: 1, uploadSource: 1 });
+StoryAssetSchema.index({ tags: 1 });
+StoryAssetSchema.index({ createdAt: -1 });
+StoryAssetSchema.index({ 'moderation.status': 1, status: 1 });
+StoryAssetSchema.index({ storyId: 1, type: 1, 'moderation.status': 1 });
+StoryAssetSchema.index({ type: 1, uploadSource: 1 });
 
 // Methods
-StoryAssetsSchema.methods.incrementUsage = function (context: string, nodeId?: string) {
+StoryAssetSchema.methods.incrementUsage = function (context: string, nodeId?: string) {
   // Check if this usage context already exists
   const existingUsage = this.usage.find(
     (usage: IUsage) => usage.context === context && usage.nodeId === nodeId
@@ -281,7 +281,7 @@ StoryAssetsSchema.methods.incrementUsage = function (context: string, nodeId?: s
   return this.save();
 };
 
-StoryAssetsSchema.methods.getOptimizedUrl = function (width?: number, height?: number): string {
+StoryAssetSchema.methods.getOptimizedUrl = function (width?: number, height?: number): string {
   // This would generate optimized URLs based on the storage provider
   // For now, return the original URL
   if (this.type === 'image' && (width || height)) {
@@ -296,7 +296,7 @@ StoryAssetsSchema.methods.getOptimizedUrl = function (width?: number, height?: n
   return this.url;
 };
 
-StoryAssetsSchema.methods.getFormattedSize = function (): string {
+StoryAssetSchema.methods.getFormattedSize = function (): string {
   const bytes = this.size;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
 
@@ -307,7 +307,7 @@ StoryAssetsSchema.methods.getFormattedSize = function (): string {
 };
 
 // Static methods
-StoryAssetsSchema.statics.getStoryAssets = function (storyId: Types.ObjectId, type?: string) {
+StoryAssetSchema.statics.getStoryAssets = function (storyId: Types.ObjectId, type?: string) {
   const query: Record<string, unknown> = {
     storyId,
     'moderation.status': 'approved',
@@ -321,7 +321,7 @@ StoryAssetsSchema.statics.getStoryAssets = function (storyId: Types.ObjectId, ty
   return this.find(query).sort({ createdAt: -1 });
 };
 
-StoryAssetsSchema.statics.getPublicAssets = function (type?: string, limit = 50) {
+StoryAssetSchema.statics.getPublicAssets = function (type?: string, limit = 50) {
   const query: Record<string, unknown> = {
     'moderation.status': 'approved',
     status: 'ready',
@@ -334,7 +334,7 @@ StoryAssetsSchema.statics.getPublicAssets = function (type?: string, limit = 50)
   return this.find(query).sort({ createdAt: -1 }).limit(limit);
 };
 
-StoryAssetsSchema.statics.getAssetsByTag = function (tag: string) {
+StoryAssetSchema.statics.getAssetsByTag = function (tag: string) {
   return this.find({
     tags: tag,
     'moderation.status': 'approved',
@@ -342,7 +342,7 @@ StoryAssetsSchema.statics.getAssetsByTag = function (tag: string) {
   }).sort({ createdAt: -1 });
 };
 
-StoryAssetsSchema.statics.getStorageStats = function () {
+StoryAssetSchema.statics.getStorageStats = function () {
   return this.aggregate([
     {
       $group: {
@@ -364,7 +364,7 @@ StoryAssetsSchema.statics.getStorageStats = function () {
   ]);
 };
 
-StoryAssetsSchema.statics.getAssetTypeStats = function () {
+StoryAssetSchema.statics.getAssetTypeStats = function () {
   return this.aggregate([
     { $match: { 'moderation.status': 'approved', status: 'ready' } },
     {
@@ -387,7 +387,7 @@ StoryAssetsSchema.statics.getAssetTypeStats = function () {
   ]);
 };
 
-StoryAssetsSchema.statics.getPendingAssets = function () {
+StoryAssetSchema.statics.getPendingAssets = function () {
   return this.find({
     'moderation.status': 'pending',
     status: { $ne: 'failed' },
@@ -396,7 +396,7 @@ StoryAssetsSchema.statics.getPendingAssets = function () {
     .populate('uploadedBy', 'username profile.displayName');
 };
 
-StoryAssetsSchema.statics.approveAsset = function (
+StoryAssetSchema.statics.approveAsset = function (
   assetId: string,
   reviewedBy: Types.ObjectId,
   notes?: string
@@ -415,7 +415,7 @@ StoryAssetsSchema.statics.approveAsset = function (
   );
 };
 
-StoryAssetsSchema.statics.rejectAsset = function (
+StoryAssetSchema.statics.rejectAsset = function (
   assetId: string,
   reviewedBy: Types.ObjectId,
   notes: string
@@ -434,4 +434,5 @@ StoryAssetsSchema.statics.rejectAsset = function (
   );
 };
 
-export default mongoose.model<IStoryAssets>('StoryAssets', StoryAssetsSchema);
+export const StoryAsset = mongoose.model<IStoryAsset>('StoryAsset', StoryAssetSchema);
+export default StoryAsset;

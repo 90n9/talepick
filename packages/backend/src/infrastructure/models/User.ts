@@ -44,7 +44,7 @@ export interface IUser extends Document {
     lastCreditRefill: Date;
     totalStoriesPlayed: number;
     totalEndingsUnlocked: number;
-    totalAvatarsUnlocked: number; // denormalized count from UserAvatars
+    totalAvatarsUnlocked: number; // denormalized count from user_avatars
     currentAvatarId: string;
     createdAt: Date;
     lastLoginAt: Date;

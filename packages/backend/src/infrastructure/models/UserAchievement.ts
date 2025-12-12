@@ -7,7 +7,7 @@ export interface IUnlockSource {
   details?: string; // additional context about completion
 }
 
-export interface IUserAchievements extends Document {
+export interface IUserAchievement extends Document {
   userId: Types.ObjectId; // references Users
   achievementId: string; // references Achievements.achievementId
 
@@ -53,7 +53,7 @@ const UnlockSourceSchema = new Schema(
   { _id: false }
 );
 
-const UserAchievementsSchema: Schema = new Schema(
+const UserAchievementSchema: Schema = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -118,21 +118,21 @@ const UserAchievementsSchema: Schema = new Schema(
 );
 
 // Indexes
-UserAchievementsSchema.index({ userId: 1, achievementId: 1 }, { unique: true });
-UserAchievementsSchema.index({ userId: 1, unlockedAt: -1 });
-UserAchievementsSchema.index({ achievementId: 1, unlockedAt: -1 });
-UserAchievementsSchema.index({ category: 1 });
-UserAchievementsSchema.index({ rarity: 1 });
+UserAchievementSchema.index({ userId: 1, achievementId: 1 }, { unique: true });
+UserAchievementSchema.index({ userId: 1, unlockedAt: -1 });
+UserAchievementSchema.index({ achievementId: 1, unlockedAt: -1 });
+UserAchievementSchema.index({ category: 1 });
+UserAchievementSchema.index({ rarity: 1 });
 
 // Methods
-UserAchievementsSchema.methods.getUnlockAge = function (): number {
+UserAchievementSchema.methods.getUnlockAge = function (): number {
   const now = new Date();
   const diffInMs = now.getTime() - this.unlockedAt.getTime();
   return Math.floor(diffInMs / (1000 * 60 * 60 * 24)); // days
 };
 
 // Static methods
-UserAchievementsSchema.statics.unlockAchievement = function (
+UserAchievementSchema.statics.unlockAchievement = function (
   userId: Types.ObjectId,
   achievementId: string,
   unlockSource: IUnlockSource,
@@ -153,39 +153,39 @@ UserAchievementsSchema.statics.unlockAchievement = function (
   });
 };
 
-UserAchievementsSchema.statics.getUserUnlockedAchievements = function (userId: Types.ObjectId) {
+UserAchievementSchema.statics.getUserUnlockedAchievements = function (userId: Types.ObjectId) {
   return this.find({ userId }).sort({ unlockedAt: -1 });
 };
 
-UserAchievementsSchema.statics.hasUserUnlockedAchievement = function (
+UserAchievementSchema.statics.hasUserUnlockedAchievement = function (
   userId: Types.ObjectId,
   achievementId: string
 ) {
   return this.findOne({ userId, achievementId });
 };
 
-UserAchievementsSchema.statics.getUserAchievementsByCategory = function (
+UserAchievementSchema.statics.getUserAchievementsByCategory = function (
   userId: Types.ObjectId,
   category: string
 ) {
   return this.find({ userId, category }).sort({ unlockedAt: -1 });
 };
 
-UserAchievementsSchema.statics.getUserAchievementsByRarity = function (
+UserAchievementSchema.statics.getUserAchievementsByRarity = function (
   userId: Types.ObjectId,
   rarity: string
 ) {
   return this.find({ userId, rarity }).sort({ unlockedAt: -1 });
 };
 
-UserAchievementsSchema.statics.getRecentAchievements = function (limit = 50) {
+UserAchievementSchema.statics.getRecentAchievements = function (limit = 50) {
   return this.find({})
     .sort({ unlockedAt: -1 })
     .limit(limit)
     .populate('userId', 'username profile.displayName');
 };
 
-UserAchievementsSchema.statics.getAchievementUnlockStats = function (achievementId: string) {
+UserAchievementSchema.statics.getAchievementUnlockStats = function (achievementId: string) {
   return this.aggregate([
     { $match: { achievementId } },
     {
@@ -210,7 +210,7 @@ UserAchievementsSchema.statics.getAchievementUnlockStats = function (achievement
   ]);
 };
 
-UserAchievementsSchema.statics.getUserAchievementStatistics = function (userId: Types.ObjectId) {
+UserAchievementSchema.statics.getUserAchievementStatistics = function (userId: Types.ObjectId) {
   return this.aggregate([
     { $match: { userId } },
     {
@@ -239,8 +239,12 @@ UserAchievementsSchema.statics.getUserAchievementStatistics = function (userId: 
   ]);
 };
 
-UserAchievementsSchema.statics.cleanupDeletedUsers = function (deletedUserIds: Types.ObjectId[]) {
+UserAchievementSchema.statics.cleanupDeletedUsers = function (deletedUserIds: Types.ObjectId[]) {
   return this.deleteMany({ userId: { $in: deletedUserIds } });
 };
 
-export default mongoose.model<IUserAchievements>('UserAchievements', UserAchievementsSchema);
+export const UserAchievement = mongoose.model<IUserAchievement>(
+  'UserAchievement',
+  UserAchievementSchema
+);
+export default UserAchievement;

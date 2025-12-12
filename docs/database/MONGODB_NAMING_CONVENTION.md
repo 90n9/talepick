@@ -98,15 +98,9 @@ export default mongoose.model<IUserAchievement>('UserAchievement', UserAchieveme
 ```
 
 **Key Pattern**:
-- **Model File**: `UserAchievement.ts` (singular) ⚠️ *Note: Some existing files use plural names and need renaming*
+- **Model File**: `UserAchievement.ts` (singular)
 - **Model Class**: `UserAchievement` (singular)
 - **Collection**: `user_achievements` (plural, with underscores)
-
-**⚠️ Existing Files That Need Renaming**:
-- `UserAchievements.ts` → `UserAchievement.ts`
-- `UserAvatars.ts` → `UserAvatar.ts`
-- `UserFavorites.ts` → `UserFavorite.ts`
-- `UserSession.ts` → `UserSession.ts`
 
 ## Implementation Guidelines
 
@@ -186,16 +180,16 @@ const CreditTransactionSchema = new Schema(fields, {
 ### Multi-Word Collections (Manual Override with underscores)
 | Model Name | Auto-Generated | Final Collection | Rule Applied |
 |------------|---------------|------------------|-------------|
-| **UserAchievements** | userachievements | `user_achievements` | Two words = underscores |
-| **UserAvatars** | useravatars | `user_avatars` | Two words = underscores |
-| **UserFavorites** | userfavorites | `user_favorites` | Two words = underscores |
+| **UserAchievement** | userachievements | `user_achievements` | Two words = underscores |
+| **UserAvatar** | useravatars | `user_avatars` | Two words = underscores |
+| **UserFavorite** | userfavorites | `user_favorites` | Two words = underscores |
 | **UserStoryProgress** | userstoryprogresses | `user_story_progress` | Three words = underscores |
-| **UserSessions** | usersessions | `user_sessions` | Two words = underscores |
+| **UserSession** | usersessions | `user_sessions` | Two words = underscores |
 | **AdminAccount** | adminaccounts | `admin_accounts` | Two words = underscores |
 | **AdminLog** | adminlogs | `admin_logs` | Two words = underscores |
 | **AdminLoginHistory** | adminloginhistories | `admin_login_history` | Three words = underscores |
 | **SecurityEvent** | securityevents | `security_events` | Two words = underscores |
-| **StoryAssets** | storyassets | `story_assets` | Two words = underscores |
+| **StoryAsset** | storyassets | `story_assets` | Two words = underscores |
 | **StoryGallery** | storygalleries | `story_gallery` | Two words = underscores |
 | **StoryNode** | storynodes | `story_nodes` | Two words = underscores |
 | **ReviewFlag** | reviewflags | `review_flags` | Two words = underscores |
@@ -221,9 +215,9 @@ When updating existing collections:
 ```javascript
 // Example migration script to rename collections
 const oldToNew = {
-  'AdminAccounts': 'admin_accounts',
-  'UserFavorites': 'user_favorites',
-  'StoryFlags': 'story_flags',
+  AdminAccount: 'admin_accounts',
+  UserFavorite: 'user_favorites',
+  StoryFlag: 'story_flags',
   // Add all mappings...
 };
 

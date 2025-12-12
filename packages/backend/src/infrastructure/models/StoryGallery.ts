@@ -45,8 +45,8 @@ export interface IStoryGallery extends Document {
   description: string;
   caption: string; // Thai caption for the image
 
-  // Asset Reference (links to StoryAssets)
-  assetId: string; // references StoryAssets.assetId
+  // Asset Reference (links to StoryAsset)
+  assetId: string; // references StoryAsset.assetId
 
   // Cached URLs (denormalized for performance)
   urls: IUrls;
