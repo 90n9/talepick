@@ -1,19 +1,27 @@
 {
-  "name": "shared",
+  "name": "@talepick/shared",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "type": "module",
   "scripts": {
+    "build": "tsc --outDir ./dist",
+    "dev": "tsc --watch --outDir ./dist",
+    "clean": "rm -rf dist",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "find . -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.jsx' | grep -q . && eslint . --ext .ts,.tsx,.js,.jsx || echo 'No files to lint'"
+    "lint": "eslint src --ext .ts,.tsx"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "Shared types, constants, and utilities for TalePick",
   "dependencies": {
     "zod": "^4.1.13"
   },
   "devDependencies": {
-    "@types/node": "^25.0.0"
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^25.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.49.0",
+    "@typescript-eslint/parser": "^8.49.0",
+    "typescript": "^5.9.3"
   }
 }

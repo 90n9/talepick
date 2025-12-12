@@ -1,18 +1,18 @@
-# TalePick Clean Architecture Implementation Guide
+# TalePick Simplified Architecture Implementation Guide
 
-> **Starting with Clean Architecture from Day 1** • Next.js 16 • MongoDB • 2025
+> **Backend-Only Business Logic with Shared Types** • Next.js 16 • MongoDB • 2025
 
 ---
 
-## 🎯 **Why Start with Clean Architecture?**
+## 🎯 **Why Use Simplified Architecture?**
 
-For TalePick, starting with Clean Architecture makes sense because:
+For TalePick, a simplified architecture makes sense because:
 
-✅ **Complex Business Logic** - Credit system, achievements, story progression
-✅ **Security Requirements** - Separate user/admin systems
-✅ **Multiple Interfaces** - Frontend + Admin dashboard
-✅ **Long-term Growth** - Expected team expansion and feature complexity
-✅ **Domain Complexity** - Interactive storytelling with branching logic
+✅ **Backend-First Logic** - All business rules validated server-side for security
+✅ **API-Driven Frontend** - Frontend consumes APIs, no duplicate logic
+✅ **Shared Types Only** - Consistency through TypeScript interfaces
+✅ **Reduced Complexity** - 3 packages instead of 6, easier to maintain
+✅ **Better Performance** - Tree-shaking works, no bundle bloat
 
 ---
 
@@ -20,18 +20,14 @@ For TalePick, starting with Clean Architecture makes sense because:
 
 ### **Phase 1: Foundation Setup (Week 1)**
 
-#### **1.1 Create Package Structure**
+#### **1.1 Create Simplified Package Structure**
 ```bash
-# Create the Clean Architecture package structure
-mkdir -p packages/{domain,application,infrastructure,presentation,shared,testing}
-mkdir -p packages/{domain,application,infrastructure,presentation}/{user,admin,shared}
+# Create the simplified package structure
+mkdir -p packages/{shared,backend,testing}
 
 # Initialize packages
-npm init -y -w packages/domain
-npm init -y -w packages/application
-npm init -y -w packages/infrastructure
-npm init -y -w packages/presentation
 npm init -y -w packages/shared
+npm init -y -w packages/backend
 npm init -y -w packages/testing
 ```
 

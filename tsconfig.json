@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./packages/backend" },
+    { "path": "./packages/testing" },
+    { "path": "./apps/frontend" },
+    { "path": "./apps/admin" }
+  ]
+}

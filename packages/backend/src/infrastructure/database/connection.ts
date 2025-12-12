@@ -9,26 +9,26 @@ if (!MONGODB_URL) {
 
 // Extend global type for cached connection
 declare global {
-  var mongoose:
+  var mongooseCache:
     | {
-        conn: typeof mongoose | null;
-        promise: Promise<typeof mongoose> | null;
+        conn: import('mongoose').Mongoose | null;
+        promise: Promise<import('mongoose').Mongoose> | null;
       }
     | undefined;
 }
 
-let cached = global.mongoose;
+let cached = global.mongooseCache;
 
 if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+  cached = global.mongooseCache = { conn: null, promise: null };
 }
 
 async function connectDB() {
-  if (cached.conn) {
-    return cached.conn;
+  if (cached!.conn) {
+    return cached!.conn;
   }
 
-  if (!cached.promise) {
+  if (!cached!.promise) {
     const opts = {
       bufferCommands: false,
       maxPoolSize: 10,
@@ -36,19 +36,19 @@ async function connectDB() {
       socketTimeoutMS: 45000,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URL, opts);
+    cached!.promise = mongoose.connect(MONGODB_URL, opts);
   }
 
   try {
-    cached.conn = await cached.promise;
+    cached!.conn = await cached!.promise;
     console.log('✅ MongoDB connected successfully');
   } catch (e) {
-    cached.promise = null;
+    cached!.promise = null;
     console.error('❌ MongoDB connection error:', e);
     throw e;
   }
 
-  return cached.conn;
+  return cached!.conn;
 }
 
 export default connectDB;
