@@ -1,4 +1,4 @@
-import mongoose, { Document, FilterQuery, Schema } from 'mongoose';
+import mongoose, { Document, HydratedDocument, Schema } from 'mongoose';
 import crypto from 'crypto';
 
 // OTP type enum
@@ -37,6 +37,32 @@ export interface IOtpCode extends Document {
   ipAddress: string;
   userAgent: string;
   metadata: IOtpMetadata;
+  isExpired?: boolean;
+  isUsed?: boolean;
+  isValid?: boolean;
+  remainingTime?: number;
+  remainingAttempts?: number;
+  status?: OtpStatus;
+}
+
+interface OtpCodeModel extends mongoose.Model<IOtpCode> {
+  generateSecureCode(): string;
+  createOtp(
+    email: string,
+    type: OtpType,
+    ipAddress: string,
+    userAgent: string,
+    metadata?: IOtpMetadata,
+    expirationMinutes?: number
+  ): Promise<IOtpCode>;
+  findAndValidate(email: string, code: string, type: OtpType): Promise<IOtpCode | null>;
+  checkRateLimit(email: string, type: OtpType, maxRequests?: number): Promise<number>;
+  incrementAttempts(otpId: mongoose.Types.ObjectId): Promise<boolean>;
+  markAsUsed(otpId: mongoose.Types.ObjectId): Promise<boolean>;
+  invalidatePreviousOtps(email: string, type: OtpType): Promise<boolean>;
+  getRecentOtps(hoursBack?: number, type?: OtpType): Promise<IOtpCode[]>;
+  cleanupExpired(): Promise<{ deletedCount: number }>;
+  getStatistics(daysBack?: number): Promise<unknown>;
 }
 
 // Schema
@@ -50,7 +76,7 @@ const metadataSchema = new Schema<IOtpMetadata>(
   { _id: false }
 );
 
-const otpCodeSchema = new Schema<IOtpCode>(
+const otpCodeSchema = new Schema<IOtpCode, OtpCodeModel>(
   {
     email: {
       type: String,
@@ -130,6 +156,167 @@ const otpCodeSchema = new Schema<IOtpCode>(
   {
     timestamps: false, // We use our own timestamp fields
     collection: 'otp_codes',
+    statics: {
+      generateSecureCode(this: OtpCodeModel): string {
+        const buffer = crypto.randomBytes(3); // 3 bytes = 24 bits = 8,388,608 possible values
+        const code = buffer.readUIntBE(0, 3) % 1000000; // Ensure it's 6 digits
+        return code.toString().padStart(6, '0');
+      },
+      createOtp(
+        this: OtpCodeModel,
+        email: string,
+        type: OtpType,
+        ipAddress: string,
+        userAgent: string,
+        metadata: IOtpMetadata = {},
+        expirationMinutes: number = 10
+      ): Promise<IOtpCode> {
+        const code = this.generateSecureCode();
+        const expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
+
+        return this.create({
+          email,
+          code,
+          type,
+          attempts: 0,
+          maxAttempts: 3,
+          expiresAt,
+          ipAddress,
+          userAgent,
+          metadata,
+        });
+      },
+      findAndValidate(
+        this: OtpCodeModel,
+        email: string,
+        code: string,
+        type: OtpType
+      ): Promise<IOtpCode | null> {
+        return this.findOne({
+          email: email.toLowerCase(),
+          code,
+          type,
+          usedAt: null,
+          expiresAt: { $gt: new Date() },
+          attempts: { $lt: 3 },
+        });
+      },
+      async checkRateLimit(
+        this: OtpCodeModel,
+        email: string,
+        type: OtpType,
+        maxRequests: number = 5
+      ): Promise<number> {
+        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+
+        const count = await this.countDocuments({
+          email: email.toLowerCase(),
+          type,
+          createdAt: { $gte: oneHourAgo },
+        });
+
+        if (count >= maxRequests) {
+          throw new Error(`Rate limit exceeded. Maximum ${maxRequests} OTP requests per hour.`);
+        }
+        return count;
+      },
+      async incrementAttempts(
+        this: OtpCodeModel,
+        otpId: mongoose.Types.ObjectId
+      ): Promise<boolean> {
+        const result = await this.updateOne(
+          { _id: otpId, attempts: { $lt: 3 } },
+          { $inc: { attempts: 1 } }
+        );
+        if (result.matchedCount === 0) {
+          throw new Error('Maximum attempts exceeded or OTP not found');
+        }
+        return true;
+      },
+      async markAsUsed(this: OtpCodeModel, otpId: mongoose.Types.ObjectId): Promise<boolean> {
+        const result = await this.updateOne(
+          { _id: otpId, usedAt: null },
+          { $set: { usedAt: new Date() } }
+        );
+        return result.modifiedCount > 0;
+      },
+      async invalidatePreviousOtps(
+        this: OtpCodeModel,
+        email: string,
+        type: OtpType
+      ): Promise<boolean> {
+        const result = await this.updateMany(
+          {
+            email: email.toLowerCase(),
+            type,
+            usedAt: null,
+            expiresAt: { $gt: new Date() },
+          },
+          { $set: { usedAt: new Date() } }
+        );
+        return result.modifiedCount > 0;
+      },
+      getRecentOtps(this: OtpCodeModel, hoursBack: number = 1, type?: OtpType) {
+        const cutoffDate = new Date(Date.now() - hoursBack * 60 * 60 * 1000);
+        const query: Record<string, unknown> = {
+          createdAt: { $gte: cutoffDate },
+        };
+
+        if (type) {
+          query.type = type;
+        }
+
+        return this.find(query)
+          .sort({ createdAt: -1 })
+          .select({
+            email: 1,
+            type: 1,
+            attempts: 1,
+            ipAddress: 1,
+            createdAt: 1,
+            usedAt: 1,
+            expiresAt: 1,
+          })
+          .exec();
+      },
+      cleanupExpired(this: OtpCodeModel): Promise<{ deletedCount: number }> {
+        return this.deleteMany({
+          expiresAt: { $lt: new Date() },
+        });
+      },
+      getStatistics(this: OtpCodeModel, daysBack: number = 7) {
+        const cutoffDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
+
+        return this.aggregate([
+          { $match: { createdAt: { $gte: cutoffDate } } },
+          {
+            $group: {
+              _id: '$type',
+              totalGenerated: { $sum: 1 },
+              totalUsed: { $sum: { $cond: [{ $ne: ['$usedAt', null] }, 1, 0] } },
+              totalExpired: { $sum: { $cond: [{ $lt: ['$expiresAt', new Date()] }, 1, 0] } },
+              averageAttempts: { $avg: '$attempts' },
+              uniqueEmails: { $addToSet: '$email' },
+            },
+          },
+          {
+            $project: {
+              type: '$_id',
+              totalGenerated: 1,
+              totalUsed: 1,
+              totalExpired: 1,
+              usageRate: { $multiply: [{ $divide: ['$totalUsed', '$totalGenerated'] }, 100] },
+              expirationRate: {
+                $multiply: [{ $divide: ['$totalExpired', '$totalGenerated'] }, 100],
+              },
+              averageAttempts: { $round: ['$averageAttempts', 2] },
+              uniqueEmailCount: { $size: '$uniqueEmails' },
+            },
+          },
+          { $sort: { totalGenerated: -1 } },
+        ]);
+      },
+    },
   }
 );
 
@@ -137,7 +324,6 @@ const otpCodeSchema = new Schema<IOtpCode>(
 otpCodeSchema.index({ email: 1, type: 1, usedAt: 1 }, { sparse: true });
 otpCodeSchema.index({ code: 1, expiresAt: 1 }, { expireAfterSeconds: 0 });
 otpCodeSchema.index({ userId: 1 }, { sparse: true });
-otpCodeSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 otpCodeSchema.index({ email: 1, createdAt: 1 });
 
 // Compound indexes for complex queries
@@ -179,176 +365,9 @@ otpCodeSchema.virtual('status').get(function (): OtpStatus {
   return OtpStatus.PENDING;
 });
 
-// Static method to generate a secure 6-digit OTP code
-otpCodeSchema.statics.generateSecureCode = function (): string {
-  const buffer = crypto.randomBytes(3); // 3 bytes = 24 bits = 8,388,608 possible values
-  const code = buffer.readUIntBE(0, 3) % 1000000; // Ensure it's 6 digits
-  return code.toString().padStart(6, '0');
-};
-
-// Static method to create a new OTP
-otpCodeSchema.statics.createOtp = function (
-  email: string,
-  type: OtpType,
-  ipAddress: string,
-  userAgent: string,
-  metadata: IOtpMetadata = {},
-  expirationMinutes: number = 10
-): Promise<IOtpCode> {
-  const code = this.generateSecureCode();
-  const expiresAt = new Date(Date.now() + expirationMinutes * 60 * 1000);
-
-  return this.create({
-    email,
-    code,
-    type,
-    attempts: 0,
-    maxAttempts: 3,
-    expiresAt,
-    ipAddress,
-    userAgent,
-    metadata,
-  });
-};
-
-// Static method to find and validate OTP
-otpCodeSchema.statics.findAndValidate = function (
-  email: string,
-  code: string,
-  type: OtpType
-): Promise<IOtpCode | null> {
-  return this.findOne({
-    email: email.toLowerCase(),
-    code,
-    type,
-    usedAt: null,
-    expiresAt: { $gt: new Date() },
-    attempts: { $lt: 3 },
-  });
-};
-
-// Static method to check rate limiting
-otpCodeSchema.statics.checkRateLimit = function (
-  email: string,
-  type: OtpType,
-  maxRequests: number = 5
-): Promise<number> {
-  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-
-  return this.countDocuments({
-    email: email.toLowerCase(),
-    type,
-    createdAt: { $gte: oneHourAgo },
-  }).then((count) => {
-    if (count >= maxRequests) {
-      throw new Error(`Rate limit exceeded. Maximum ${maxRequests} OTP requests per hour.`);
-    }
-    return count;
-  });
-};
-
-// Static method to increment failed attempts
-otpCodeSchema.statics.incrementAttempts = function (
-  otpId: mongoose.Types.ObjectId
-): Promise<boolean> {
-  return this.updateOne({ _id: otpId, attempts: { $lt: 3 } }, { $inc: { attempts: 1 } }).then(
-    (result) => {
-      if (result.matchedCount === 0) {
-        throw new Error('Maximum attempts exceeded or OTP not found');
-      }
-      return true;
-    }
-  );
-};
-
-// Static method to mark OTP as used
-otpCodeSchema.statics.markAsUsed = function (otpId: mongoose.Types.ObjectId): Promise<boolean> {
-  return this.updateOne({ _id: otpId, usedAt: null }, { $set: { usedAt: new Date() } }).then(
-    (result) => result.modifiedCount > 0
-  );
-};
-
-// Static method to invalidate previous unused OTPs for same email and type
-otpCodeSchema.statics.invalidatePreviousOtps = function (
-  email: string,
-  type: OtpType
-): Promise<boolean> {
-  return this.updateMany(
-    {
-      email: email.toLowerCase(),
-      type,
-      usedAt: null,
-      expiresAt: { $gt: new Date() },
-    },
-    { $set: { usedAt: new Date() } }
-  ).then((result) => result.modifiedCount > 0);
-};
-
-// Static method to get recent OTPs for monitoring
-otpCodeSchema.statics.getRecentOtps = function (hoursBack: number = 1, type?: OtpType) {
-  const cutoffDate = new Date(Date.now() - hoursBack * 60 * 60 * 1000);
-  const query: FilterQuery<IOtpCode> = {
-    createdAt: { $gte: cutoffDate },
-  };
-
-  if (type) {
-    query.type = type;
-  }
-
-  return this.find(query).sort({ createdAt: -1 }).select({
-    email: 1,
-    type: 1,
-    attempts: 1,
-    ipAddress: 1,
-    createdAt: 1,
-    usedAt: 1,
-    expiresAt: 1,
-  });
-};
-
-// Static method to cleanup expired OTPs
-otpCodeSchema.statics.cleanupExpired = function (): Promise<{ deletedCount: number }> {
-  return this.deleteMany({
-    expiresAt: { $lt: new Date() },
-  });
-};
-
-// Static method to get OTP statistics
-otpCodeSchema.statics.getStatistics = function (daysBack: number = 7) {
-  const cutoffDate = new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000);
-
-  return this.aggregate([
-    { $match: { createdAt: { $gte: cutoffDate } } },
-    {
-      $group: {
-        _id: '$type',
-        totalGenerated: { $sum: 1 },
-        totalUsed: { $sum: { $cond: [{ $ne: ['$usedAt', null] }, 1, 0] } },
-        totalExpired: { $sum: { $cond: [{ $lt: ['$expiresAt', new Date()] }, 1, 0] } },
-        averageAttempts: { $avg: '$attempts' },
-        uniqueEmails: { $addToSet: '$email' },
-      },
-    },
-    {
-      $project: {
-        type: '$_id',
-        totalGenerated: 1,
-        totalUsed: 1,
-        totalExpired: 1,
-        usageRate: { $multiply: [{ $divide: ['$totalUsed', '$totalGenerated'] }, 100] },
-        expirationRate: { $multiply: [{ $divide: ['$totalExpired', '$totalGenerated'] }, 100] },
-        averageAttempts: { $round: ['$averageAttempts', 2] },
-        uniqueEmailCount: { $size: '$uniqueEmails' },
-      },
-    },
-    { $sort: { totalGenerated: -1 } },
-  ]);
-};
-
 // Middleware to hash code if needed (storing as is for now since it's a temporary value)
-otpCodeSchema.pre('save', function (next) {
+otpCodeSchema.pre('save', function (this: HydratedDocument<IOtpCode>) {
   // You could add additional validation here if needed
-  next();
 });
 
-export const OtpCode = mongoose.model<IOtpCode>('OtpCode', otpCodeSchema);
+export const OtpCode = mongoose.model<IOtpCode, OtpCodeModel>('OtpCode', otpCodeSchema);

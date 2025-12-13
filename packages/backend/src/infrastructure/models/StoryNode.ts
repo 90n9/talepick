@@ -31,12 +31,10 @@ export interface IEndingData {
 
 export interface IAnalytics {
   totalVisits?: number;
-  choiceDistribution?: [
-    {
-      choiceId: string;
-      count: number;
-    },
-  ];
+  choiceDistribution?: Array<{
+    choiceId: string;
+    count: number;
+  }>;
 }
 
 export interface ILayout {
@@ -326,7 +324,7 @@ StoryNodeSchema.methods.recordChoice = function (choiceId: string): Promise<void
   }
 
   const choiceIndex = this.analytics.choiceDistribution.findIndex(
-    (choice) => choice.choiceId === choiceId
+    (choice: { choiceId: string; count: number }) => choice.choiceId === choiceId
   );
 
   if (choiceIndex >= 0) {
@@ -384,4 +382,5 @@ StoryNodeSchema.statics.updateNodeLayout = function (
   );
 };
 
-export default mongoose.model<IStoryNode>('StoryNode', StoryNodeSchema);
+export const StoryNode = mongoose.model<IStoryNode>('StoryNode', StoryNodeSchema);
+export default StoryNode;

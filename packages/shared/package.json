@@ -7,8 +7,11 @@
     "build": "tsc --outDir ./dist",
     "dev": "tsc --watch --outDir ./dist",
     "clean": "rm -rf dist",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "lint": "eslint src --ext .ts,.tsx"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src --ext .ts,.tsx",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [],
   "author": "",
@@ -22,6 +25,8 @@
     "@types/node": "^25.0.0",
     "@typescript-eslint/eslint-plugin": "^8.49.0",
     "@typescript-eslint/parser": "^8.49.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.15",
+    "prettier": "^3.7.4"
   }
 }

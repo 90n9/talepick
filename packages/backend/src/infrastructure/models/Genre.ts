@@ -18,7 +18,6 @@ const GenreSchema: Schema = new Schema(
     slug: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       lowercase: true,
       match: /^[a-z0-9-]+$/, // URL-friendly slug
@@ -68,4 +67,5 @@ GenreSchema.index({ isActive: 1 });
 GenreSchema.index({ sortOrder: 1 });
 GenreSchema.index({ storyCount: -1 });
 
-export default mongoose.model<IGenre>('Genre', GenreSchema);
+export const Genre = mongoose.model<IGenre>('Genre', GenreSchema);
+export default Genre;

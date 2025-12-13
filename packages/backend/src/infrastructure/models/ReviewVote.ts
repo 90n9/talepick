@@ -129,7 +129,7 @@ reviewVoteSchema.statics.getUserVoteForReview = function (
 ): Promise<{ voteType: VoteType } | null> {
   return this.findOne({ reviewId, userId })
     .select({ voteType: 1, _id: 0 })
-    .then((vote) => (vote ? { voteType: vote.voteType } : null));
+    .then((vote: IReviewVote | null) => (vote ? { voteType: vote.voteType } : null));
 };
 
 reviewVoteSchema.statics.updateVote = function (

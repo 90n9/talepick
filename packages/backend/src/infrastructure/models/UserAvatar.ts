@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document, Types, HydratedDocument } from 'mongoose';
 
 export interface IUnlockSource {
   type: string; // 'achievement' | 'story_completion' | 'event' | 'admin_grant' | 'purchase'
@@ -19,6 +19,45 @@ export interface IAvatarInfo {
   category: string; // 'character' | 'story_specific' | 'achievement' | 'event'
   imageUrl: string; // thumbnail URL for quick display
   thumbnailUrl: string;
+}
+
+export interface IPopularAvatarStats {
+  _id: string;
+  avatarId: string;
+  unlockCount: number;
+  totalUsage: number;
+  averageUsage: number;
+  avatarInfo: Pick<IAvatarInfo, 'name' | 'rarity' | 'thumbnailUrl'>;
+}
+
+export interface IAvatarUnlockAnalyticsResult {
+  _id: {
+    rarity: string;
+    category: string;
+  };
+  rarity: string;
+  category: string;
+  totalUnlocks: number;
+  averageUsage: number;
+  totalUsage: number;
+  usagePerUnlock: number;
+}
+
+export interface IUserAvatarTimelineEntry {
+  _id: Types.ObjectId;
+  avatarId: string;
+  avatarInfo: Pick<IAvatarInfo, 'name' | 'rarity'>;
+  unlockedAt: Date;
+  unlockSource: Pick<IUnlockSource, 'type' | 'sourceName'>;
+}
+
+export interface IUserAvatarStatistics {
+  _id: null;
+  totalAvatars: number;
+  totalUsage: number;
+  averageUsage: number;
+  rarityBreakdown: Record<string, number>;
+  categoryBreakdown: Record<string, number>;
 }
 
 export interface IUserAvatar extends Document {
@@ -42,6 +81,29 @@ export interface IUserAvatar extends Document {
   setActive(): Promise<void>;
   recordUsage(): Promise<void>;
   getUsageStats(): { timesUsed: number; lastUsedAt?: Date };
+}
+
+interface IUserAvatarModel extends mongoose.Model<IUserAvatar> {
+  getUserCurrentAvatar(userId: Types.ObjectId): Promise<IUserAvatar | null>;
+  getUserAvatarCollection(userId: Types.ObjectId): Promise<IUserAvatar[]>;
+  getUserAvatarsByRarity(userId: Types.ObjectId, rarity: string): Promise<IUserAvatar[]>;
+  unlockAvatar(
+    userId: Types.ObjectId,
+    avatarId: string,
+    unlockSource: IUnlockSource,
+    avatarInfo: IAvatarInfo
+  ): Promise<IUserAvatar>;
+  hasAvatar(userId: Types.ObjectId, avatarId: string): Promise<boolean>;
+  getMostPopularAvatars(limit?: number): Promise<IPopularAvatarStats[]>;
+  getAvatarUnlockAnalytics(): Promise<IAvatarUnlockAnalyticsResult[]>;
+  getUserAvatarTimeline(userId: Types.ObjectId): Promise<IUserAvatarTimelineEntry[]>;
+  getUserAvatarStatistics(userId: Types.ObjectId): Promise<IUserAvatarStatistics[]>;
+  adminGrantAvatar(
+    userId: Types.ObjectId,
+    avatarId: string,
+    avatarInfo: IAvatarInfo,
+    details?: string
+  ): Promise<IUserAvatar>;
 }
 
 const UnlockSourceSchema = new Schema(
@@ -117,7 +179,7 @@ const AvatarInfoSchema = new Schema(
   { _id: false }
 );
 
-const UserAvatarSchema: Schema = new Schema(
+const UserAvatarSchema: Schema<IUserAvatar, IUserAvatarModel> = new Schema(
   {
     userId: {
       type: Schema.Types.ObjectId,
@@ -168,9 +230,10 @@ UserAvatarSchema.index({ avatarId: 1, unlockedAt: -1 });
 UserAvatarSchema.index({ 'avatarInfo.rarity': 1 });
 
 // Methods
-UserAvatarSchema.methods.setActive = async function () {
+UserAvatarSchema.methods.setActive = async function (this: HydratedDocument<IUserAvatar>) {
   // First, deactivate all other avatars for this user
-  await this.constructor.updateMany(
+  const Model = this.constructor as IUserAvatarModel;
+  await Model.updateMany(
     { userId: this.userId },
     {
       $set: {
@@ -202,7 +265,10 @@ UserAvatarSchema.methods.getUsageStats = function () {
 };
 
 // Static methods
-UserAvatarSchema.statics.getUserCurrentAvatar = function (userId: Types.ObjectId) {
+UserAvatarSchema.statics.getUserCurrentAvatar = function (
+  this: IUserAvatarModel,
+  userId: Types.ObjectId
+) {
   return this.findOne({
     userId,
     'usage.isCurrentlyActive': true,
@@ -210,6 +276,7 @@ UserAvatarSchema.statics.getUserCurrentAvatar = function (userId: Types.ObjectId
 };
 
 UserAvatarSchema.statics.getUserAvatarCollection = function (
+  this: IUserAvatarModel,
   userId: Types.ObjectId,
   skip = 0,
   limit = 50
@@ -218,6 +285,7 @@ UserAvatarSchema.statics.getUserAvatarCollection = function (
 };
 
 UserAvatarSchema.statics.getUserAvatarsByRarity = function (
+  this: IUserAvatarModel,
   userId: Types.ObjectId,
   rarity: string
 ) {
@@ -228,6 +296,7 @@ UserAvatarSchema.statics.getUserAvatarsByRarity = function (
 };
 
 UserAvatarSchema.statics.unlockAvatar = function (
+  this: IUserAvatarModel,
   userId: Types.ObjectId,
   avatarId: string,
   unlockSource: IUnlockSource,
@@ -241,12 +310,16 @@ UserAvatarSchema.statics.unlockAvatar = function (
   });
 };
 
-UserAvatarSchema.statics.hasAvatar = function (userId: Types.ObjectId, avatarId: string) {
-  return this.findOne({ userId, avatarId });
+UserAvatarSchema.statics.hasAvatar = function (
+  this: IUserAvatarModel,
+  userId: Types.ObjectId,
+  avatarId: string
+) {
+  return this.exists({ userId, avatarId }).then((result) => !!result);
 };
 
-UserAvatarSchema.statics.getMostPopularAvatars = function (limit = 20) {
-  return this.aggregate([
+UserAvatarSchema.statics.getMostPopularAvatars = function (this: IUserAvatarModel, limit = 20) {
+  return this.aggregate<IPopularAvatarStats>([
     {
       $group: {
         _id: '$avatarId',
@@ -268,11 +341,11 @@ UserAvatarSchema.statics.getMostPopularAvatars = function (limit = 20) {
         'avatarInfo.thumbnailUrl': 1,
       },
     },
-  ]);
+  ]).exec();
 };
 
-UserAvatarSchema.statics.getAvatarUnlockAnalytics = function () {
-  return this.aggregate([
+UserAvatarSchema.statics.getAvatarUnlockAnalytics = function (this: IUserAvatarModel) {
+  return this.aggregate<IAvatarUnlockAnalyticsResult>([
     {
       $group: {
         _id: {
@@ -295,10 +368,13 @@ UserAvatarSchema.statics.getAvatarUnlockAnalytics = function () {
         usagePerUnlock: { $round: [{ $divide: ['$totalUsage', '$totalUnlocks'] }, 2] },
       },
     },
-  ]);
+  ]).exec();
 };
 
-UserAvatarSchema.statics.getUserAvatarTimeline = function (userId: Types.ObjectId) {
+UserAvatarSchema.statics.getUserAvatarTimeline = function (
+  this: IUserAvatarModel,
+  userId: Types.ObjectId
+) {
   return this.find({ userId })
     .select({
       avatarId: 1,
@@ -308,11 +384,16 @@ UserAvatarSchema.statics.getUserAvatarTimeline = function (userId: Types.ObjectI
       'unlockSource.type': 1,
       'unlockSource.sourceName': 1,
     })
-    .sort({ unlockedAt: -1 });
+    .sort({ unlockedAt: -1 })
+    .lean<IUserAvatarTimelineEntry>()
+    .exec();
 };
 
-UserAvatarSchema.statics.getUserAvatarStatistics = function (userId: Types.ObjectId) {
-  return this.aggregate([
+UserAvatarSchema.statics.getUserAvatarStatistics = function (
+  this: IUserAvatarModel,
+  userId: Types.ObjectId
+) {
+  return this.aggregate<IUserAvatarStatistics>([
     { $match: { userId } },
     {
       $group: {
@@ -376,6 +457,7 @@ UserAvatarSchema.statics.getUserAvatarStatistics = function (userId: Types.Objec
 };
 
 UserAvatarSchema.statics.adminGrantAvatar = function (
+  this: IUserAvatarModel,
   userId: Types.ObjectId,
   avatarId: string,
   avatarInfo: IAvatarInfo,
@@ -393,5 +475,8 @@ UserAvatarSchema.statics.adminGrantAvatar = function (
   );
 };
 
-export const UserAvatar = mongoose.model<IUserAvatar>('UserAvatar', UserAvatarSchema);
+export const UserAvatar = mongoose.model<IUserAvatar, IUserAvatarModel>(
+  'UserAvatar',
+  UserAvatarSchema
+);
 export default UserAvatar;

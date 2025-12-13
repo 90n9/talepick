@@ -59,7 +59,6 @@ const AchievementSchema: Schema = new Schema(
     achievementId: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
     },
     title: {
@@ -324,4 +323,5 @@ AchievementSchema.statics.getAchievementsWithAvatarRewards = function () {
   });
 };
 
-export default mongoose.model<IAchievement>('Achievement', AchievementSchema);
+export const Achievement = mongoose.model<IAchievement>('Achievement', AchievementSchema);
+export default Achievement;

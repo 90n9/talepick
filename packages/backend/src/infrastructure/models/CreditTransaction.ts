@@ -116,4 +116,8 @@ CreditTransactionSchema.index({ transactionType: 1 });
 CreditTransactionSchema.index({ source: 1 });
 CreditTransactionSchema.index({ deletedAt: 1 }, { sparse: true });
 
-export default mongoose.model<ICreditTransaction>('CreditTransaction', CreditTransactionSchema);
+export const CreditTransaction = mongoose.model<ICreditTransaction>(
+  'CreditTransaction',
+  CreditTransactionSchema
+);
+export default CreditTransaction;

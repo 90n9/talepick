@@ -1,5 +1,5 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
 import bcrypt from 'bcryptjs';
+import mongoose, { Document, HydratedDocument, Schema, Types } from 'mongoose';
 
 export interface IUser extends Document {
   email: string;
@@ -65,19 +65,15 @@ const UserSchema: Schema = new Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
       trim: true,
-      index: true,
     },
     username: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       minlength: 3,
       maxlength: 20,
-      index: true,
     },
     passwordHash: {
       type: String,
@@ -126,7 +122,6 @@ const UserSchema: Schema = new Schema(
       googleId: {
         type: String,
         sparse: true,
-        index: true,
       },
       emailVerified: {
         type: Boolean,
@@ -237,18 +232,13 @@ UserSchema.index({ 'accountStatus.status': 1 });
 UserSchema.index({ deletedAt: 1 }, { sparse: true });
 
 // Pre-save middleware for password hashing
-UserSchema.pre('save', async function (next) {
+UserSchema.pre('save', async function (this: HydratedDocument<IUser>) {
   if (!this.isModified('passwordHash') || !this.passwordHash) {
-    return next();
+    return;
   }
 
-  try {
-    this.passwordHash = await bcrypt.hash(this.passwordHash, 12);
-    this.authentication.hasPassword = true;
-  } catch (error) {
-    return next(error);
-  }
-  next();
+  this.passwordHash = await bcrypt.hash(this.passwordHash, 12);
+  this.authentication.hasPassword = true;
 });
 
 // Methods
@@ -264,4 +254,5 @@ UserSchema.methods.toPublicJSON = function () {
   return user;
 };
 
-export default mongoose.model<IUser>('User', UserSchema);
+export const User = mongoose.model<IUser>('User', UserSchema);
+export default User;

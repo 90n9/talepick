@@ -93,7 +93,6 @@ const adminLoginHistorySchema = new Schema<IAdminLoginHistory>(
     sessionId: {
       type: String,
       sparse: true,
-      unique: true,
     },
     sessionExpiresAt: {
       type: Date,

@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, HydratedDocument, Schema } from 'mongoose';
 
 // Flag reason enum
 export enum FlagReason {
@@ -109,11 +109,10 @@ reviewFlagSchema.virtual('resolutionTime').get(function () {
 });
 
 // Pre-save middleware to automatically set reviewedAt when reviewedBy is set
-reviewFlagSchema.pre('save', function (next) {
+reviewFlagSchema.pre('save', function (this: HydratedDocument<IReviewFlag>) {
   if (this.isModified('reviewedBy') && this.reviewedBy && !this.reviewedAt) {
     this.reviewedAt = new Date();
   }
-  next();
 });
 
 // Static methods
@@ -298,7 +297,9 @@ reviewFlagSchema.statics.checkUserCanFlag = function (
   userId: mongoose.Types.ObjectId,
   reviewId: mongoose.Types.ObjectId
 ): Promise<boolean> {
-  return this.findOne({ userId, reviewId }).then((existing) => !existing);
+  return this.findOne({ userId, reviewId }).then(
+    (existing: HydratedDocument<IReviewFlag> | null) => !existing
+  );
 };
 
 reviewFlagSchema.statics.createFlag = function (

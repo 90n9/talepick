@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, HydratedDocument, Schema } from 'mongoose';
 
 // Story flag reason enum
 export enum StoryFlagReason {
@@ -28,6 +28,8 @@ export interface IStoryFlag extends Document {
   reviewedBy?: mongoose.Types.ObjectId;
   reviewedAt?: Date;
   createdAt: Date;
+  isPending?: boolean;
+  isResolved?: boolean;
 }
 
 // Schema
@@ -86,7 +88,7 @@ storyFlagSchema.index({ reviewedBy: 1 });
 storyFlagSchema.index({ createdAt: -1 });
 
 // Middleware
-storyFlagSchema.pre('save', function (next) {
+storyFlagSchema.pre('save', function (this: HydratedDocument<IStoryFlag>) {
   if (
     this.isModified('status') &&
     (this.status === StoryFlagStatus.REVIEWED ||
@@ -100,8 +102,6 @@ storyFlagSchema.pre('save', function (next) {
   if (this.isModified('status') && this.status === StoryFlagStatus.PENDING && this.reviewedAt) {
     this.reviewedAt = undefined;
   }
-
-  next();
 });
 
 // Virtual for checking if flag is pending review
