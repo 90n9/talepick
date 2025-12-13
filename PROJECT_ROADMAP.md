@@ -31,14 +31,17 @@ Based on analysis of the mock applications and existing documentation, TalePick 
 │   Frontend      │    │     Admin       │
 │   (Next.js)     │◄──►│   (Next.js)     │
 │   Port: 3000    │    │   Port: 3001    │
+│   /api/*        │    │   /api/*        │
 └─────────────────┘    └─────────────────┘
          │                       │
          └───────────┬───────────┘
                      │
          ┌─────────────────┐
-         │  Next.js API    │
-         │ (Shared Code)   │
-         │   /api/*        │
+         │  Backend Pkg    │
+         │ (@talepick/bk) │
+│   Clean Arch    │
+│   Use Cases      │
+│   Models         │
          └─────────────────┘
                      │
          ┌─────────────────┐
@@ -49,11 +52,14 @@ Based on analysis of the mock applications and existing documentation, TalePick 
 ```
 
 ### Architecture Notes
-- **Monolithic Next.js**: Single codebase with shared API routes
-- **Shared API Layer**: `/apps/frontend/api/*` and `/apps/admin/api/*` share common logic
-- **Code Reuse**: Authentication, database models, and business logic shared between apps
-- **Simplified Deployment**: Only two applications to deploy (frontend + admin)
-- **Database**: Single MongoDB instance shared by both applications
+- **Next.js 16 Monorepo**: Two separate Next.js applications with shared backend package
+- **API Routes**: Each app has its own API routes (`/api/*` on both apps; differentiated by host/subdomain)
+- **Shared Backend Package**: `@talepick/backend` contains all business logic, use cases, and models
+- **Clean Architecture**: Domain → Application → Infrastructure → Presentation layers
+- **Code Reuse**: Database models, use cases, and utilities shared via backend package
+- **Deployment URLs**:
+  - Frontend: `https://www.talepick.com` → API at `https://www.talepick.com/api/*`
+  - Admin: `https://admin.talepick.com` → API at `https://admin.talepick.com/api/*`
   - **Collection Naming**: Follows Mongoose conventions - single-word models auto-generate collections, multi-word models use `lowercase_with_underscores` (e.g., `User` → `users`, `UserAchievement` → `user_achievements`)
   - **Model Naming**: Models use singular PascalCase (e.g., `UserAchievement`, not `UserAchievements`)
 
@@ -183,12 +189,14 @@ Based on analysis of the mock applications and existing documentation, TalePick 
   - [x] Create clean architecture packages structure
 
 - **Milestone 1.2**: API Foundation
+  - [x] Create comprehensive API documentation for frontend and admin
   - [ ] Set up Next.js API routes structure in both apps
-  - [ ] Configure MongoDB connection and shared models
-  - [ ] Create shared API middleware (CORS, logging, error handling)
-  - [ ] Implement health check API endpoint
+  - [ ] Configure MongoDB connection and shared models from backend package
+  - [ ] Create API middleware (CORS, logging, error handling)
+  - [ ] Implement health check API endpoint in both apps
   - [ ] Set up environment configuration for both apps
   - [ ] Create shared utilities for database operations
+  - [ ] Establish deployment URLs (www.talepick.com and admin.talepick.com)
 
 #### Week 2: Authentication System
 - **Milestone 1.3**: User Authentication API
@@ -468,11 +476,11 @@ Based on analysis of the mock applications and existing documentation, TalePick 
 5. **Database Performance** (Week 14) - Scalability
 
 ### Technical Dependencies
-- **Frontend UI** depends on **Shared API Routes** completion
-- **Admin Dashboard** depends on **Shared Authentication** system
-- **Story Editor** depends on **Story Management API Routes**
-- **Analytics** depends on **User Activity** data collection
-- **Mobile App** (future) depends on **Shared API v1** completion
+- **Frontend UI** depends on **Backend Package** completion (`@talepick/backend`)
+- **Admin Dashboard** depends on **Shared Authentication** and **Backend Package**
+- **Story Editor** depends on **Story Management** use cases in backend package
+- **Analytics** depends on **User Activity** data collection via shared models
+- **Mobile App** (future) depends on **Frontend API** (`/api/*`) completion
 
 ### Risk Mitigation Strategies
 1. **Shared Code Architecture**: API routes and business logic can be developed once and reused
@@ -612,6 +620,16 @@ The TalePick platform represents a significant but achievable development projec
 3. Begin Phase 1 implementation
 4. Establish regular progress reviews
 5. Create detailed sprint plans
+
+## 📚 Project Documentation
+
+- **[API Documentation](docs/api/)** - Complete API specifications
+  - [Frontend API](docs/api/frontend/README.md) - User-facing API endpoints at `/api/*`
+  - [Admin API](docs/api/backend/README.md) - Admin dashboard API endpoints at `/api/*`
+- **[Database Schema](docs/database/)** - Complete database documentation with 25 collections
+- **[Implementation Plans](docs/implementation/)** - Detailed milestone implementation guides
+- **[Architecture Guide](FOLDER_STRUCTURE.md)** - Clean architecture overview
+- **[Project Instructions](CLAUDE.md)** - Development guidelines and patterns
 
 The roadmap provides a clear path from concept to launch, with specific milestones, deliverables, and success metrics to ensure project success.
 
