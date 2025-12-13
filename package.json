@@ -39,7 +39,13 @@
     "db:reset": "npm run db:cleanup && npm run db:init",
     "db:fix-indexes": "MONGODB_URL=\"mongodb://root:example@localhost:27017/talepick?authSource=admin\" tsx scripts/fix-indexes.ts",
     "db:recreate-indexes": "MONGODB_URL=\"mongodb://root:example@localhost:27017/talepick?authSource=admin\" tsx scripts/recreate-indexes.ts",
-    "db:check-indexes": "MONGODB_URL=\"mongodb://root:example@localhost:27017/talepick?authSource=admin\" tsx scripts/check-indexes.ts"
+    "db:check-indexes": "MONGODB_URL=\"mongodb://root:example@localhost:27017/talepick?authSource=admin\" tsx scripts/check-indexes.ts",
+    "seed": "MONGODB_URL=\"mongodb://root:example@localhost:27017/talepick?authSource=admin\" tsx packages/backend/src/infrastructure/seeds/index.ts",
+    "seed:genres": "MONGODB_URL=\"mongodb://root:example@localhost:27017/talepick?authSource=admin\" tsx -e \"import { seedGenres } from './packages/backend/src/infrastructure/seeds'; seedGenres();\"",
+    "seed:avatars": "MONGODB_URL=\"mongodb://root:example@localhost:27017/talepick?authSource=admin\" tsx -e \"import { seedAvatars } from './packages/backend/src/infrastructure/seeds'; seedAvatars();\"",
+    "seed:achievements": "MONGODB_URL=\"mongodb://root:example@localhost:27017/talepick?authSource=admin\" tsx -e \"import { seedAchievements } from './packages/backend/src/infrastructure/seeds'; seedAchievements();\"",
+    "setup": "npm install && npm run db:start && sleep 5 && npm run seed",
+    "dev:full": "npm run setup && npm run dev"
   },
   "keywords": [],
   "author": "",
