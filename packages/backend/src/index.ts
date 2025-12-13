@@ -37,10 +37,69 @@ export {
   getEnvironmentDatabaseOptions,
 } from './infrastructure/database/options';
 
+// Export Configuration
+export * from './infrastructure/config';
+
 // Export Middleware
-export * from './presentation/middleware/cors.middleware';
-export * from './presentation/middleware/logging.middleware';
-export * from './presentation/middleware/error.middleware';
-export * from './presentation/middleware/rateLimit.middleware';
-export * from './presentation/middleware/validation.middleware';
-export * from './presentation/middleware/withMiddleware';
+export {
+  cors,
+  corsConfigs,
+  getCorsConfig as getCorsMiddlewareConfig,
+} from './presentation/middleware/cors.middleware';
+export {
+  logger,
+  requestLogger,
+  productionLogger,
+} from './presentation/middleware/logging.middleware';
+export {
+  errorHandler,
+  defaultErrorHandler,
+  developmentErrorHandler,
+  productionErrorHandler,
+  AppError,
+  ValidationError,
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+  ConflictError,
+  RateLimitError,
+  DatabaseError,
+  createSimpleErrorResponse,
+  notFoundHandler,
+  type ErrorContext,
+  type ErrorHandlingOptions,
+} from './presentation/middleware/error.middleware';
+export {
+  rateLimit,
+  rateLimitConfigs,
+  getRateLimitConfig as getRateLimitMiddlewareConfig,
+  withRateLimit,
+  createRateLimit,
+  type RateLimitOptions,
+  type RateLimitCheckResult,
+} from './presentation/middleware/rateLimit.middleware';
+export {
+  validate,
+  validateBody,
+  validateQuery,
+  validateParams,
+  validateHeaders,
+  commonSchemas,
+  validationConfigs,
+  type ValidationOptions,
+  type ValidationResult,
+} from './presentation/middleware/validation.middleware';
+export {
+  withMiddleware,
+  middlewareConfigs,
+  getMiddlewareConfig,
+  createStandardHandler,
+  createStrictHandler,
+  createAdminHandler,
+  createMinimalHandler,
+  createPipeline,
+  addCustomMiddleware,
+  type MiddlewareConfig,
+  type RequestContext,
+  type MiddlewareResult,
+} from './presentation/middleware/withMiddleware';
