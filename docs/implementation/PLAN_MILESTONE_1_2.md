@@ -32,7 +32,7 @@ This implementation plan details the setup of API Foundation for TalePick, estab
 - [ ] Health check endpoints return database connection status
 - [ ] Consistent error handling and response shape across API endpoints
 - [ ] Rate limiting available (memory-based is OK for single-instance dev)
-- [ ] CORS is only enabled when explicitly needed (defaults to same-origin)
+- [ ] No CORS middleware required for same-origin `/api/*` (add later only if cross-origin clients exist)
 - [ ] Centralized logging for API requests and responses
 - [ ] Server-only utilities live in `@talepick/backend` (avoid bundling config/server code into clients)
 
@@ -113,7 +113,6 @@ This implementation plan details the setup of API Foundation for TalePick, estab
 #### 3.1 Create Core Middleware
 **Files to Create**:
 ```
-/packages/backend/src/presentation/middleware/cors.middleware.ts
 /packages/backend/src/presentation/middleware/logging.middleware.ts
 /packages/backend/src/presentation/middleware/error.middleware.ts
 /packages/backend/src/presentation/middleware/rateLimit.middleware.ts
@@ -121,12 +120,7 @@ This implementation plan details the setup of API Foundation for TalePick, estab
 ```
 
 **Implementation Details**:
-
-**CORS Middleware**:
-- Only enable when needed (same-origin `/api/*` calls do not require CORS)
-- Support for multiple origins
-- Preflight request handling
-- Credentials management
+- CORS middleware is not needed for same-origin `/api/*` calls; add only if/when cross-origin clients exist.
 
 **Logging Middleware**:
 - Request/response logging
@@ -197,7 +191,6 @@ This implementation plan details the setup of API Foundation for TalePick, estab
 API_RATE_LIMIT_WINDOW_MS=900000
 API_RATE_LIMIT_MAX_REQUESTS=100
 API_LOG_LEVEL=info
-API_CORS_ORIGIN=http://localhost:3000,http://localhost:3001 # only used if CORS is enabled
 
 # Database Configuration
 DB_CONNECTION_TIMEOUT_MS=5000
@@ -268,7 +261,6 @@ DB_MIN_POOL_SIZE=2
 ### Phase 2: Middleware Implementation (Day 3-4)
 1. **Error Handling Middleware** - Critical for stable API behavior
 2. **Logging Middleware** - Essential for debugging and monitoring
-3. **CORS Middleware (Optional)** - Only if cross-origin clients exist
 
 ### Phase 3: Utilities and Standards (Day 5)
 1. **Database Utilities** - Improve developer experience
@@ -355,7 +347,6 @@ export function withMiddleware(
 ) {
   return async (request: NextRequest) => {
     const middlewareChain = [
-      corsMiddleware(options.cors),
       loggingMiddleware(options.logging),
       rateLimitMiddleware(options.rateLimit),
       authMiddleware(options.auth),
@@ -387,7 +378,7 @@ export function withMiddleware(
 ### Security Considerations
 1. **Input Validation**: Validate all incoming data
 2. **Rate Limiting**: Prevent API abuse
-3. **CORS Configuration**: Restrict cross-origin requests
+3. **CORS Configuration**: Avoid enabling CORS unless needed; if enabled, restrict origins
 4. **Error Sanitization**: Don't expose internal errors
 
 ### Development Experience

@@ -24,5 +24,23 @@ export { IUserRepository } from './domain/repositories/IUserRepository';
 export { ICreditRepository } from './domain/repositories/ICreditRepository';
 
 // Export Database Utilities
-export { default as connectDB } from './infrastructure/database/connection';
+export {
+  default as connectDB,
+  disconnectDB,
+  checkDatabaseHealth,
+  getConnectionState,
+} from './infrastructure/database/connection';
 export { performHealthCheck, getDatabaseHealth } from './infrastructure/database/health';
+export {
+  getDatabaseOptions,
+  validateDatabaseOptions,
+  getEnvironmentDatabaseOptions,
+} from './infrastructure/database/options';
+
+// Export Middleware
+export * from './presentation/middleware/cors.middleware';
+export * from './presentation/middleware/logging.middleware';
+export * from './presentation/middleware/error.middleware';
+export * from './presentation/middleware/rateLimit.middleware';
+export * from './presentation/middleware/validation.middleware';
+export * from './presentation/middleware/withMiddleware';
