@@ -324,7 +324,6 @@ const otpCodeSchema = new Schema<IOtpCode, OtpCodeModel>(
 otpCodeSchema.index({ email: 1, type: 1, usedAt: 1 }, { sparse: true });
 otpCodeSchema.index({ code: 1, expiresAt: 1 }, { expireAfterSeconds: 0 });
 otpCodeSchema.index({ userId: 1 }, { sparse: true });
-otpCodeSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 otpCodeSchema.index({ email: 1, createdAt: 1 });
 
 // Compound indexes for complex queries

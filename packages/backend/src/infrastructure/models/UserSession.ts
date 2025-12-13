@@ -124,7 +124,6 @@ const userSessionSchema = new Schema<IUserSession>(
     sessionToken: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       maxlength: 255,
     },
@@ -165,7 +164,7 @@ const userSessionSchema = new Schema<IUserSession>(
 // Indexes
 userSessionSchema.index({ sessionToken: 1 }, { unique: true });
 userSessionSchema.index({ userId: 1, isActive: 1 });
-userSessionSchema.index({ expiresAt: 1 });
+// TTL index for expired sessions (replaces the simple expiresAt index above)
 userSessionSchema.index({ 'deviceInfo.ip': 1 });
 userSessionSchema.index({ lastActivity: 1 });
 userSessionSchema.index({ 'authentication.authMethod': 1 });

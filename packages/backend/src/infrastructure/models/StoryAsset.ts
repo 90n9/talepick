@@ -148,7 +148,6 @@ const StoryAssetSchema: Schema = new Schema(
     assetId: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
     },
     storyId: {

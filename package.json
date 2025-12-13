@@ -32,7 +32,14 @@
     "docker:up": "docker-compose -f docker-compose.prod.yml up -d",
     "docker:down": "docker-compose -f docker-compose.prod.yml down",
     "docker:logs": "docker-compose -f docker-compose.prod.yml logs -f",
-    "docker:prod": "npm run docker:build && npm run docker:up"
+    "docker:prod": "npm run docker:build && npm run docker:up",
+    "test:models": "MONGODB_URL=\"mongodb://root:example@localhost:27017/talepick?authSource=admin\" tsx scripts/test-model-imports.ts",
+    "db:init": "MONGODB_URL=\"mongodb://root:example@localhost:27017/talepick?authSource=admin\" tsx scripts/init-database.ts",
+    "db:cleanup": "MONGODB_URL=\"mongodb://root:example@localhost:27017/talepick?authSource=admin\" tsx scripts/cleanup-database.ts",
+    "db:reset": "npm run db:cleanup && npm run db:init",
+    "db:fix-indexes": "MONGODB_URL=\"mongodb://root:example@localhost:27017/talepick?authSource=admin\" tsx scripts/fix-indexes.ts",
+    "db:recreate-indexes": "MONGODB_URL=\"mongodb://root:example@localhost:27017/talepick?authSource=admin\" tsx scripts/recreate-indexes.ts",
+    "db:check-indexes": "MONGODB_URL=\"mongodb://root:example@localhost:27017/talepick?authSource=admin\" tsx scripts/check-indexes.ts"
   },
   "keywords": [],
   "author": "",

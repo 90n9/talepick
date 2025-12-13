@@ -59,7 +59,6 @@ const AchievementSchema: Schema = new Schema(
     achievementId: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
     },
     title: {

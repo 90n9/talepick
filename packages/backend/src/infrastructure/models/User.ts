@@ -65,19 +65,15 @@ const UserSchema: Schema = new Schema(
     email: {
       type: String,
       required: true,
-      unique: true,
       lowercase: true,
       trim: true,
-      index: true,
     },
     username: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       minlength: 3,
       maxlength: 20,
-      index: true,
     },
     passwordHash: {
       type: String,
@@ -126,7 +122,6 @@ const UserSchema: Schema = new Schema(
       googleId: {
         type: String,
         sparse: true,
-        index: true,
       },
       emailVerified: {
         type: Boolean,

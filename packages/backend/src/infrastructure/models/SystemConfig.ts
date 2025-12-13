@@ -65,7 +65,6 @@ const systemConfigSchema = new Schema<ISystemConfig>(
     key: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       maxlength: 100,
       match: /^[A-Z][A-Z0-9_]*$/,

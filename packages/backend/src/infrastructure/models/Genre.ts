@@ -18,7 +18,6 @@ const GenreSchema: Schema = new Schema(
     slug: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       lowercase: true,
       match: /^[a-z0-9-]+$/, // URL-friendly slug

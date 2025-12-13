@@ -122,8 +122,8 @@ const authenticationSchema = new Schema<IAuthentication>(
       enum: Object.values(AuthMethod),
       required: true,
     },
-    googleId: { type: String, sparse: true, unique: true },
-    googleEmail: { type: String, sparse: true, unique: true },
+    googleId: { type: String, sparse: true },
+    googleEmail: { type: String, sparse: true },
     googleProfile: { type: googleProfileSchema, sparse: true },
     hasPassword: { type: Boolean, required: true },
     lastPasswordChange: { type: Date },
@@ -157,7 +157,6 @@ const adminAccountSchema = new Schema<IAdminAccount>(
     username: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       minlength: 3,
       maxlength: 30,
@@ -166,7 +165,6 @@ const adminAccountSchema = new Schema<IAdminAccount>(
     email: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
       lowercase: true,
       match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,

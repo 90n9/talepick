@@ -77,7 +77,6 @@ const StoryGallerySchema: Schema = new Schema(
     galleryImageId: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
     },
     storyId: {
