@@ -1,5 +1,6 @@
 #!/usr/bin/env npx tsx
 
+import mongoose from 'mongoose';
 import connectDB from '../packages/backend/src/infrastructure/database/connection.js';
 import { seedAvatars } from '../packages/backend/src/infrastructure/seeds/index.js';
 
@@ -12,6 +13,7 @@ async function run() {
     await seedAvatars();
 
     console.log('✅ Avatar seeding completed');
+    await mongoose.disconnect();
     process.exit(0);
   } catch (error) {
     console.error('❌ Avatar seeding failed:', error);

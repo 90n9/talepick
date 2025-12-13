@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Genre, Achievement, Avatar } from '../models';
 import connectDB from '../database/connection';
 
@@ -169,6 +170,7 @@ const runSeeds = async () => {
     await seedAchievements();
 
     console.log('✅ Database seeding completed successfully');
+    await mongoose.disconnect();
     process.exit(0);
   } catch (error) {
     console.error('❌ Database seeding error:', error);

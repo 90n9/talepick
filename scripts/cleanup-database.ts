@@ -5,6 +5,7 @@
  * Run with: npm run db:cleanup
  */
 
+import mongoose from 'mongoose';
 import connectDB from '../packages/backend/src/infrastructure/database/connection.js';
 
 async function cleanupDatabase() {
@@ -17,6 +18,7 @@ async function cleanupDatabase() {
 
     if (collections.length === 0) {
       console.log('ℹ️  No collections found. Database is already clean.');
+      await mongoose.disconnect();
       process.exit(0);
     }
 
@@ -49,6 +51,7 @@ async function cleanupDatabase() {
       });
     }
 
+    await mongoose.disconnect();
     process.exit(0);
   } catch (error) {
     console.error('❌ Database cleanup failed:', error);

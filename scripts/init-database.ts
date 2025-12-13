@@ -114,6 +114,7 @@ async function initDatabase() {
     await Achievement.deleteOne({ achievementId: 'first_story' });
     console.log('✅ Test data cleaned up');
 
+    await mongoose.disconnect();
     process.exit(0);
   } catch (error) {
     console.error('❌ Database initialization failed:', error);

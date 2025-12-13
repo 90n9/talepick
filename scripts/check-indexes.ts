@@ -5,6 +5,7 @@
  * Run with: npm run db:check-indexes
  */
 
+import mongoose from 'mongoose';
 import connectDB from '../packages/backend/src/infrastructure/database/connection.js';
 import {
   User,
@@ -60,6 +61,7 @@ async function checkAllIndexes() {
     }
 
     console.log('🎉 Index check completed successfully!');
+    await mongoose.disconnect();
     process.exit(0);
   } catch (error) {
     console.error('❌ Index check failed:', error);
