@@ -118,13 +118,15 @@ graph LR
     C --> C7[reviews/]
     C --> C8[analytics/]
     C --> C9[lib/]
-    C --> C10[ui/]
-    C --> C11[api/]
+	    C --> C10[ui/]
+	    C --> C11[api/]
 
-    C11 --> C11a[auth/]
-    C11 --> C11b[admin/]
+	    C11 --> C11a[auth/]
+	    C11 --> C11b[users/]
+	    C11 --> C11c[stories/]
+	    C11 --> C11d[analytics/]
 
-    style A fill:#fce4ec
+	    style A fill:#fce4ec
 ```
 
 ---
@@ -213,27 +215,34 @@ graph LR
         A3[api/stories/]
     end
 
-    subgraph "Admin API (Port 3001)"
-        B1[api/auth/]
-        B2[api/admin/]
-        B3[api/users/]
-        B4[api/stories/]
-    end
+	    subgraph "Admin API (Port 3001)"
+	        B1[api/auth/]
+	        B2[api/users/]
+	        B3[api/stories/]
+	        B4[api/analytics/]
+	    end
 
     A1 --> A1a[register/route.ts]
     A1 --> A1b[login/route.ts]
     A1 --> A1c[verify-otp/route.ts]
 
-    A3 --> A3a[route.ts]
-    A3 --> A3b[id/route.ts]
-    A3 --> A3c[id/play/route.ts]
+	    A3 --> A3a[route.ts]
+	    A3 --> A3b[id/route.ts]
+	    A3 --> A3c[id/play/route.ts]
 
-    B2 --> B2a[users/route.ts]
-    B2 --> B2b[stories/route.ts]
-    B2 --> B2c[analytics/route.ts]
+	    B1 --> B1a[login/route.ts]
+	    B1 --> B1b[refresh/route.ts]
 
-    style A1 fill:#e1f5fe
-    style B1 fill:#fce4ec
+	    B2 --> B2a[route.ts]
+	    B2 --> B2b[id/suspend/route.ts]
+
+	    B3 --> B3a[route.ts]
+	    B3 --> B3b[id/publish/route.ts]
+
+	    B4 --> B4a[dashboard/route.ts]
+
+	    style A1 fill:#e1f5fe
+	    style B1 fill:#fce4ec
 ```
 
 ### Middleware Implementation

@@ -8,7 +8,8 @@ This implementation plan details the setup of API Foundation for TalePick, estab
 
 **Current State Assessment**:
 - ✅ MongoDB connection utility exists in `packages/backend/src/infrastructure/database/connection.ts`
-- ✅ Basic API route structure exists (`/api/hello` in frontend)
+- ✅ Basic API route exists (`/api/hello` in `apps/frontend`)
+- ⚠️ Admin app currently has no API routes yet (add first routes under `apps/admin/app/api/*`)
 - ✅ Backend package follows Clean Architecture with controllers, use cases, and models
 - ✅ Environment variables are configured
 - ⚠️ Health check endpoints need implementation
@@ -29,10 +30,11 @@ This implementation plan details the setup of API Foundation for TalePick, estab
 ### Success Criteria
 - [ ] Both frontend and admin apps have working API routes
 - [ ] Health check endpoints return database connection status
-- [ ] Consistent error handling across all API endpoints
-- [ ] CORS properly configured for both development and production
+- [ ] Consistent error handling and response shape across API endpoints
+- [ ] Rate limiting available (memory-based is OK for single-instance dev)
+- [ ] No CORS middleware required for same-origin `/api/*` (add later only if cross-origin clients exist)
 - [ ] Centralized logging for API requests and responses
-- [ ] Database utilities available across the monorepo
+- [ ] Server-only utilities live in `@talepick/backend` (avoid bundling config/server code into clients)
 
 ---
 
@@ -48,25 +50,28 @@ This implementation plan details the setup of API Foundation for TalePick, estab
 ```
 
 **Implementation Details**:
-- Check MongoDB connection status
-- Return application health metrics
+- Must run in Node.js runtime (Mongoose is not Edge-compatible): `export const runtime = 'nodejs'`
+- Check MongoDB connection status via a shared backend helper (avoid duplicated DB logic)
+- Return basic health metrics (db status + uptime + process memory)
 - Include memory usage and uptime
 - Support for readiness and liveness probes
+- Ensure the endpoint is not cached (`export const dynamic = 'force-dynamic'` or `revalidate = 0`)
 
-#### 1.2 Standardize API Route Templates
+#### 1.2 Standardize API Responses and Controller Base
 **Files to Create**:
 ```
-/packages/backend/src/presentation/templates/ApiRouteTemplate.ts
-/packages/backend/src/presentation/templates/ControllerTemplate.ts
+/packages/backend/src/presentation/controllers/BaseController.ts
+/packages/backend/src/presentation/serializers/apiResponse.ts
+/packages/backend/src/presentation/serializers/apiError.ts
 ```
 
 **Implementation Details**:
-- Template for consistent API response format
-- Standard error response structure
-- Request validation wrapper
-- Response serialization utilities
+- Define a single, consistent JSON response envelope (success + error)
+- Standardize error codes/messages (don't leak internals; keep stack traces server logs only)
+- Provide helpers to build `NextResponse` consistently (status + body)
+- Keep these server-only and used from API route handlers/controllers
 
-### Task 2: MongoDB Connection and Shared Models
+### Task 2: MongoDB Connection and Health Utilities
 
 #### 2.1 Enhance Database Connection Utility
 **File to Modify**:
@@ -75,60 +80,53 @@ This implementation plan details the setup of API Foundation for TalePick, estab
 ```
 
 **Additions**:
-- Connection health monitoring
-- Automatic reconnection logic
-- Connection pooling metrics
+- Connection health monitoring helper (readyState + lightweight ping)
+- Clarify connection pooling behavior: cache is per Node.js process (single-instance dev effectively "one pool")
+- Keep reconnection logic minimal (Mongoose already retries; avoid custom loops unless needed)
 - Graceful shutdown handling
 
 #### 2.2 Create Database Utility Functions
 **Files to Create**:
 ```
-/packages/backend/src/infrastructure/database/utils.ts
 /packages/backend/src/infrastructure/database/health.ts
+/packages/backend/src/infrastructure/database/options.ts
 ```
 
 **Implementation Details**:
-- Generic CRUD operations wrapper
-- Transaction helper functions
-- Query optimization utilities
-- Index validation functions
+- `health.ts`: shared function used by both apps' `/api/health` endpoints
+- `options.ts`: map env vars → mongoose connection options (pool sizes/timeouts) with sensible defaults
+- Keep generic CRUD/query builder helpers out of Milestone 1.2 unless immediately used by a repository
 
-#### 2.3 Export Models Properly
+#### 2.3 Export Backend Entry Points Properly
 **File to Modify**:
 ```
 /packages/backend/src/index.ts
 ```
 
 **Implementation Details**:
-- Export all models for use in API routes
-- Create model registry for type safety
-- Add model validation schemas
+- Export server-only entrypoints needed by apps' API routes (e.g., `connectDB`, db health helper, `withMiddleware`)
+- Do NOT export all Mongoose models from the package root; keep models internal to `@talepick/backend` to reduce accidental coupling and client-side import risk
+- Prefer exporting controllers/use-cases (Clean Architecture boundary), not persistence models
 
 ### Task 3: Shared API Middleware
 
 #### 3.1 Create Core Middleware
 **Files to Create**:
 ```
-/packages/backend/src/infrastructure/middleware/cors.middleware.ts
-/packages/backend/src/infrastructure/middleware/logging.middleware.ts
-/packages/backend/src/infrastructure/middleware/error.middleware.ts
-/packages/backend/src/infrastructure/middleware/rateLimit.middleware.ts
-/packages/backend/src/infrastructure/middleware/validation.middleware.ts
+/packages/backend/src/presentation/middleware/logging.middleware.ts
+/packages/backend/src/presentation/middleware/error.middleware.ts
+/packages/backend/src/presentation/middleware/rateLimit.middleware.ts
+/packages/backend/src/presentation/middleware/validation.middleware.ts
 ```
 
 **Implementation Details**:
-
-**CORS Middleware**:
-- Environment-specific CORS configuration
-- Support for multiple origins
-- Preflight request handling
-- Credentials management
+- CORS middleware is not needed for same-origin `/api/*` calls; add only if/when cross-origin clients exist.
 
 **Logging Middleware**:
 - Request/response logging
 - Performance metrics collection
 - Error stack trace capture
-- Structured logging format
+- Structured logging format (and redact secrets / never log auth tokens)
 
 **Error Handling Middleware**:
 - Centralized error processing
@@ -137,7 +135,8 @@ This implementation plan details the setup of API Foundation for TalePick, estab
 - Error reporting integration
 
 **Rate Limiting Middleware**:
-- In-memory rate limiting for development
+- In-memory rate limiting is acceptable for the current single-instance deployment
+- Add a note for future scaling: replace with Redis/Upstash/etc when running multiple instances
 - Configurable limits per endpoint
 - Sliding window implementation
 - Custom rate limit headers
@@ -146,12 +145,12 @@ This implementation plan details the setup of API Foundation for TalePick, estab
 - Zod schema validation
 - Request body validation
 - Query parameter validation
-- File upload validation
+- File upload validation (defer until file uploads exist)
 
 #### 3.2 Create Middleware Composition Utility
 **File to Create**:
 ```
-/packages/backend/src/infrastructure/middleware/compose.ts
+/packages/backend/src/presentation/middleware/withMiddleware.ts
 ```
 
 **Implementation Details**:
@@ -159,22 +158,24 @@ This implementation plan details the setup of API Foundation for TalePick, estab
 - Error boundary for middleware chain
 - Async middleware support
 - Context passing between middleware
+- Clarify: this is NOT Next.js "Middleware" (Edge), it's a route-handler wrapper for `app/api/*`
 
 ### Task 4: Environment Configuration
 
 #### 4.1 Create Configuration Module
 **Files to Create**:
 ```
-/packages/shared/src/config/database.ts
-/packages/shared/src/config/api.ts
-/packages/shared/src/config/environment.ts
+/packages/backend/src/infrastructure/config/env.ts
+/packages/backend/src/infrastructure/config/api.ts
+/packages/backend/src/infrastructure/config/database.ts
 ```
 
 **Implementation Details**:
 - Environment-specific configurations
-- Configuration validation
+- Configuration validation with Zod (server-only)
 - Default values with environment override
 - Type-safe configuration access
+- Keep `@talepick/shared` focused on types/constants/utils (avoid putting env parsing there)
 
 #### 4.2 Update Environment Variables
 **Files to Modify**:
@@ -190,7 +191,6 @@ This implementation plan details the setup of API Foundation for TalePick, estab
 API_RATE_LIMIT_WINDOW_MS=900000
 API_RATE_LIMIT_MAX_REQUESTS=100
 API_LOG_LEVEL=info
-API_CORS_ORIGIN=http://localhost:3000,http://localhost:3001
 
 # Database Configuration
 DB_CONNECTION_TIMEOUT_MS=5000
@@ -198,7 +198,9 @@ DB_MAX_POOL_SIZE=10
 DB_MIN_POOL_SIZE=2
 ```
 
-### Task 5: Shared Database Utilities
+### Task 5 (Optional): Shared Database Utilities
+
+**Note**: Implement this only if Milestone 1.2 endpoints immediately need repository abstractions; otherwise defer to Milestone 1.3+ when feature endpoints are added.
 
 #### 5.1 Create Base Repository Pattern
 **Files to Create**:
@@ -258,13 +260,12 @@ DB_MIN_POOL_SIZE=2
 
 ### Phase 2: Middleware Implementation (Day 3-4)
 1. **Error Handling Middleware** - Critical for stable API behavior
-2. **CORS Middleware** - Required for frontend-backend communication
-3. **Logging Middleware** - Essential for debugging and monitoring
+2. **Logging Middleware** - Essential for debugging and monitoring
 
 ### Phase 3: Utilities and Standards (Day 5)
 1. **Database Utilities** - Improve developer experience
 2. **Base Repository Pattern** - Standardize data access
-3. **API Route Templates** - Ensure consistency
+3. **Controller/Response Helpers** - Ensure consistency
 
 ### Phase 4: Advanced Features (Day 6-7)
 1. **Rate Limiting Middleware** - Production readiness
@@ -282,20 +283,19 @@ DB_MIN_POOL_SIZE=2
    - Share database connection utilities
 
 2. **Admin App** → **Backend Package**:
-   - Reuse same controllers (with admin-specific logic)
-   - Share middleware stack
-   - Use same database models
+   - Use admin-specific controllers/use-cases (keep auth and authorization separate from user system)
+   - Share the same middleware wrapper and DB utilities where safe
+   - Use the same database connection code (but keep admin/user secrets separated in env)
 
 3. **Both Apps** → **Shared Package**:
-   - Import configuration
+   - Import shared types/constants/utils only (no env parsing in shared)
    - Use shared types and constants
    - Access utility functions
 
 ### Database Integration
-1. **Single Connection Pool**: Shared across both apps
-2. **Model Registry**: Centralized model access
-3. **Migration Support**: Database schema versioning
-4. **Health Monitoring**: Connection status for both apps
+1. **Connection Pooling**: One pool per running app process (single-instance dev behaves like "one pool")
+2. **Model Access**: Keep models internal to backend; expose only what API handlers/controllers need
+3. **Health Monitoring**: Connection status for both apps via shared health helper
 
 ---
 
@@ -323,11 +323,11 @@ export const POST = withMiddleware(
 ### Controller Pattern
 ```typescript
 // packages/backend/src/presentation/controllers/ExampleController.ts
-import { BaseController } from '../templates/BaseController';
-import { ApiResponse, HttpStatus } from '../types/api';
+import { NextRequest, NextResponse } from 'next/server';
+import { BaseController } from './BaseController';
 
 export class ExampleController extends BaseController {
-  async handleGet(request: NextRequest): Promise<ApiResponse> {
+  async handleGet(request: NextRequest): Promise<NextResponse> {
     try {
       // Business logic here
       return this.success({ message: 'Success' });
@@ -340,14 +340,13 @@ export class ExampleController extends BaseController {
 
 ### Middleware Composition Pattern
 ```typescript
-// packages/backend/src/infrastructure/middleware/withMiddleware.ts
+// packages/backend/src/presentation/middleware/withMiddleware.ts
 export function withMiddleware(
   handler: Function,
   options: MiddlewareOptions = {}
 ) {
   return async (request: NextRequest) => {
     const middlewareChain = [
-      corsMiddleware(options.cors),
       loggingMiddleware(options.logging),
       rateLimitMiddleware(options.rateLimit),
       authMiddleware(options.auth),
@@ -379,7 +378,7 @@ export function withMiddleware(
 ### Security Considerations
 1. **Input Validation**: Validate all incoming data
 2. **Rate Limiting**: Prevent API abuse
-3. **CORS Configuration**: Restrict cross-origin requests
+3. **CORS Configuration**: Avoid enabling CORS unless needed; if enabled, restrict origins
 4. **Error Sanitization**: Don't expose internal errors
 
 ### Development Experience
@@ -445,9 +444,10 @@ export function withMiddleware(
 
 1. **Assumes**: MongoDB Docker container is running (completed in Milestone 1.1)
 2. **Assumes**: Basic Next.js setup is complete for both apps
-3. **Note**: This implementation focuses on foundation, not business logic
-4. **Note**: Authentication specifics will be handled in Milestone 1.3
-5. **Note**: Error handling focuses on infrastructure, not application errors
+3. **Assumes**: Single-instance deployment for now (in-memory rate limiting is acceptable)
+4. **Note**: This implementation focuses on foundation, not business logic
+5. **Note**: Authentication specifics will be handled in Milestone 1.3
+6. **Note**: Error handling focuses on infrastructure, not application errors
 
 ---
 

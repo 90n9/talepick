@@ -1,485 +1,1113 @@
-Frontend API contract aligned with backend models under `packages/backend/src/infrastructure/models`. Each endpoint notes the calling page, request payload, and response structure. Field names match the backend schemas (e.g., `profile.displayName`, `media.coverImageUrl`, `stats.averageRating`, `gameStats.credits`). Authenticated routes expect `Authorization: Bearer <token>`.
+# TalePick Frontend API Specification
 
-## Auth & Session
+> **Version**: 1.0.0  
+> **Base URL**: `https://www.talepick.com`  
+> **API Prefix**: `/api`  
+> **Updated**: 2025-12-13
 
-### POST /api/auth/login
-- Used by: `pages/Login.tsx` (email/password flow).
-- Request:
-```json
-{ "email": "user@example.com", "password": "hunter2" }
-```
-- Response 200:
-```json
-{
-  "token": "jwt",
-  "refreshToken": "refresh-jwt",
-  "user": {
-    "_id": "66ff…",
-    "email": "traveler@chronos.com",
-    "username": "traveler",
-    "profile": {
-      "displayName": "นักเดินทาง",
-      "avatar": { "type": "custom", "value": "https://…" },
-      "bio": "",
-      "profileImageUrl": "https://…"
-    },
-    "authentication": { "authMethod": "email", "isGuest": false, "emailVerified": true, "hasPassword": true },
-    "gameStats": {
-      "credits": 20,
-      "maxCredits": 25,
-      "lastCreditRefill": "2024-12-30T10:00:00Z",
-      "totalStoriesPlayed": 5,
-      "totalEndingsUnlocked": 3,
-      "totalAvatarsUnlocked": 2,
-      "currentAvatarId": "cyber_1",
-      "lastLoginAt": "2024-12-30T10:00:00Z"
-    }
-  }
+## 1. Scope
+
+This document defines the request/response contract for the user-facing (frontend) HTTP API. It is written to be machine-checkable (AI) and focuses on input/output shapes, types, and error semantics.
+
+## 2. Conventions
+
+- **Content type**: JSON for all requests/responses unless stated otherwise.
+- **Request body**: `Content-Type: application/json` is required for endpoints with a JSON body.
+- **IDs**: MongoDB ObjectId strings (24 hex chars) unless explicitly noted.
+- **Timestamps**: ISO 8601 strings in UTC (RFC 3339), e.g. `2025-12-13T00:00:00.000Z`.
+- **Pagination**: `page` (1-based) and `limit`.
+- **Auth header**: `Authorization: Bearer <accessToken>`.
+- **Request ID**: optionally pass `x-request-id` or `x-correlation-id`; API may echo back `requestId` in responses.
+
+## 3. Standard Response Envelope
+
+All endpoints return `ApiResponse<T>` on success and `ApiError` on failure, except `/api/health` which is a raw health payload (no envelope).
+
+```ts
+export type ISODateString = string; // e.g. "2025-12-13T00:00:00.000Z"
+export type ObjectId = string; // Mongo ObjectId hex string (24 chars)
+
+export interface ApiResponse<T> {
+  success: true;
+  data: T;
+  message?: string;
+  timestamp: ISODateString;
+  requestId?: string;
+}
+
+export interface ApiPaginationMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+export type ApiPaginatedResponse<T> = ApiResponse<{
+  items: T[];
+  meta: ApiPaginationMeta;
+}>;
+
+export enum ErrorCode {
+  // Server errors (5xx)
+  INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR',
+  DATABASE_CONNECTION_ERROR = 'DATABASE_CONNECTION_ERROR',
+  SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE',
+
+  // Client errors (4xx)
+  BAD_REQUEST = 'BAD_REQUEST',
+  UNAUTHORIZED = 'UNAUTHORIZED',
+  FORBIDDEN = 'FORBIDDEN',
+  NOT_FOUND = 'NOT_FOUND',
+  METHOD_NOT_ALLOWED = 'METHOD_NOT_ALLOWED',
+  CONFLICT = 'CONFLICT',
+  VALIDATION_ERROR = 'VALIDATION_ERROR',
+  RATE_LIMIT_EXCEEDED = 'RATE_LIMIT_EXCEEDED',
+
+  // Authentication errors
+  INVALID_CREDENTIALS = 'INVALID_CREDENTIALS',
+  TOKEN_EXPIRED = 'TOKEN_EXPIRED',
+  TOKEN_INVALID = 'TOKEN_INVALID',
+  ACCOUNT_NOT_VERIFIED = 'ACCOUNT_NOT_VERIFIED',
+  ACCOUNT_DISABLED = 'ACCOUNT_DISABLED',
+}
+
+export interface ApiError {
+  success: false;
+  error: {
+    code: ErrorCode;
+    message: string;
+    details?: unknown;
+  };
+  timestamp: ISODateString;
+  requestId?: string;
 }
 ```
 
-### POST /api/auth/login/google
-- Used by: `pages/Login.tsx` (Google button).
-- Request:
-```json
-{ "idToken": "google-oauth-id-token" }
-```
-- Response 200: same shape as `/api/auth/login`.
+## 4. Authentication
 
-### POST /api/auth/guest
-- Used by: `pages/Login.tsx` (Guest login button).
-- Request: `{ "locale": "th-TH" }`
-- Response 200:
-```json
-{
-  "token": "guest-session-token",
-  "user": {
-    "_id": "guest-1700000000000",
-    "email": "",
-    "username": "guest-1700000000000",
-    "profile": {
-      "displayName": "ผู้เยี่ยมชม (Guest)",
-      "avatar": { "type": "default", "value": "" },
-      "bio": "",
-      "profileImageUrl": ""
-    },
-    "authentication": { "authMethod": "guest", "isGuest": true, "emailVerified": false, "hasPassword": false },
-    "gameStats": {
-      "credits": 10,
-      "maxCredits": 10,
-      "lastCreditRefill": "2024-12-30T10:00:00Z",
-      "totalStoriesPlayed": 0,
-      "totalEndingsUnlocked": 0,
-      "totalAvatarsUnlocked": 0,
-      "currentAvatarId": ""
-    }
-  }
+- **User access token**: short-lived JWT used in `Authorization` header.
+- **Refresh token**: long-lived token used only with `/api/auth/refresh`.
+- **Guest users**: treated as regular users with `authentication.isGuest = true` and an auto-generated `email`/`username` to satisfy DB constraints.
+- **Separation**: user tokens and admin tokens are signed with different keys and must not be accepted across apps.
+
+## 5. Data Models (DB-aligned)
+
+Schemas below align with `/packages/backend/src/infrastructure/models/*` unless marked as a derived DTO.
+
+```ts
+// User (from User.ts)
+export type UserAuthMethod = 'email' | 'google' | 'guest';
+export type UserAvatarType = 'default' | 'custom' | 'google';
+export type UserAccountStatus = 'active' | 'suspended' | 'banned' | 'under_review' | 'locked';
+export type UserLockType = 'manual' | 'auto_security' | 'auto_fraud';
+
+export interface UserProfile {
+  displayName: string;
+  avatar: { type: UserAvatarType; value: string };
+  bio?: string;
+  profileImageUrl?: string;
+}
+
+export interface UserAuthentication {
+  authMethod: UserAuthMethod;
+  isGuest: boolean;
+  emailVerified: boolean;
+  hasPassword: boolean;
+}
+
+export interface UserAccountStatusInfo {
+  status: UserAccountStatus;
+  reason?: string;
+  moderatedBy?: ObjectId;
+  moderatedAt?: ISODateString;
+  suspensionEndsAt?: ISODateString;
+  lockType?: UserLockType;
+  lockExpiresAt?: ISODateString;
+}
+
+export interface UserGameStats {
+  credits: number;
+  maxCredits: number;
+  lastCreditRefill: ISODateString;
+  totalStoriesPlayed: number;
+  totalEndingsUnlocked: number;
+  totalAvatarsUnlocked: number;
+  currentAvatarId?: string;
+  createdAt: ISODateString;
+  lastLoginAt?: ISODateString;
+}
+
+export interface UserPublic {
+  id: ObjectId;
+  email: string;
+  username: string;
+  profile: UserProfile;
+  authentication: UserAuthentication;
+  gameStats: UserGameStats;
+  accountStatus: UserAccountStatusInfo;
+  createdAt: ISODateString;
+  updatedAt: ISODateString;
+}
+
+// Auth DTOs (derived)
+export interface AuthTokens {
+  accessToken: string;
+  refreshToken: string;
+  expiresInSeconds: number;
+}
+
+export interface AuthSession {
+  tokens: AuthTokens;
+  user: UserPublic;
+}
+
+// Story (from Story.ts)
+export type StoryModerationStatus = 'approved' | 'pending' | 'suspended' | 'removed';
+export type StoryViolenceLevel = 'none' | 'mild' | 'moderate' | 'high';
+export type StoryAgeRating = 0 | 13 | 16 | 18;
+
+export interface StoryContentRating {
+  ageRating: StoryAgeRating;
+  violenceLevel: StoryViolenceLevel;
+  contentWarnings: string[];
+}
+
+export interface StoryMetadata {
+  genre: string; // references Genre.slug
+  tags: string[];
+  author: string;
+  createdAt: ISODateString;
+  publishedAt?: ISODateString;
+  isPublished: boolean;
+  isComingSoon: boolean;
+  launchDate?: ISODateString;
+  contentRating: StoryContentRating;
+}
+
+export interface StoryMedia {
+  coverImageAssetId?: string;
+  headerImageAssetId?: string;
+  coverVideoAssetId?: string;
+  bgMusicAssetId?: string;
+  coverImageUrl?: string;
+  headerImageUrl?: string;
+  coverVideoUrl?: string;
+  bgMusicUrl?: string;
+  trailerUrl?: string;
+}
+
+export interface StoryGalleryRef {
+  imageIds: string[]; // references StoryGallery.galleryImageId
+  totalImages: number;
+  featuredImageId?: string;
+}
+
+export interface StoryStats {
+  totalPlayers: number;
+  averageRating: number;
+  totalRatings: number;
+  averagePlaytime: number;
+  estimatedDuration?: string;
+  totalEndings: number;
+  totalChoices: number;
+}
+
+export interface StoryContent {
+  startingNodeId?: string;
+}
+
+export interface StoryModeration {
+  status: StoryModerationStatus;
+  reportCount: number;
+  moderatedBy?: ObjectId;
+  moderatedAt?: ISODateString;
+}
+
+export interface StoryPublic {
+  id: ObjectId;
+  title: string;
+  description: string;
+  metadata: Pick<StoryMetadata, 'genre' | 'tags' | 'author' | 'isComingSoon' | 'launchDate'>;
+  media: Pick<StoryMedia, 'coverImageUrl' | 'headerImageUrl' | 'trailerUrl'>;
+  gallery: StoryGalleryRef;
+  stats: Pick<
+    StoryStats,
+    'averageRating' | 'totalRatings' | 'totalPlayers' | 'estimatedDuration' | 'totalEndings'
+  >;
+}
+
+export interface StoryDetail extends StoryPublic {
+  content: StoryContent;
+  moderation: Pick<StoryModeration, 'status' | 'reportCount'>;
+
+  // Derived (user-context) fields
+  isFavorite?: boolean;
+  userProgress?: {
+    endingsUnlocked: string[];
+    lastPlayedAt?: ISODateString;
+  };
+}
+
+// Story graph (from StoryNode.ts) (derived DTO)
+export type StoryNodeSegmentType = 'text' | 'image' | 'video';
+export type StoryEndingType = 'good' | 'bad' | 'neutral' | 'secret';
+
+export interface StoryNodeSegment {
+  type: StoryNodeSegmentType;
+  url?: string;
+  text?: string;
+  duration?: number;
+}
+
+export interface StoryNodeChoice {
+  id: string;
+  text: string;
+  nextNodeId?: string;
+  requirements?: {
+    achievementId?: string;
+    minCredits?: number;
+    playedStoryId?: string;
+  };
+  costs?: { credits?: number };
+}
+
+export interface StoryNodePublic {
+  nodeId: string;
+  segments: StoryNodeSegment[];
+  media: {
+    bgMusicUrl?: string;
+    backgroundImageUrl?: string;
+  };
+  choices: StoryNodeChoice[];
+  rewards: {
+    achievementId?: string;
+    credits?: number;
+    avatarIds?: string[];
+  };
+  isEnding: boolean;
+  endingData?: {
+    title?: string;
+    description?: string;
+    type?: StoryEndingType;
+    isSecret?: boolean;
+    isRare?: boolean;
+  };
+}
+
+// Reviews (from Review.ts)
+export type ReviewModerationStatus = 'approved' | 'pending' | 'rejected' | 'flagged';
+export type ReviewRating = 1 | 2 | 3 | 4 | 5;
+
+export interface ReviewPublic {
+  id: ObjectId;
+  userId: ObjectId;
+  storyId: ObjectId;
+  rating: ReviewRating;
+  reviewText: string;
+  upVotes: number;
+  downVotes: number;
+  isSpoiler: boolean;
+  adminReply?: {
+    text?: string;
+    adminId?: ObjectId;
+    repliedAt?: ISODateString;
+  };
+  createdAt: ISODateString;
+}
+
+export interface ReviewSummary {
+  average: number;
+  total: number;
+  distribution: Record<'1' | '2' | '3' | '4' | '5', number>;
+}
+
+// Reporting (from StoryFlag.ts / ReviewFlag.ts)
+export type StoryFlagReason =
+  | 'inappropriate_content'
+  | 'copyright'
+  | 'malware'
+  | 'spam'
+  | 'misinformation'
+  | 'other';
+export type ReviewFlagReason = 'spam' | 'harassment' | 'offensive' | 'spoiler' | 'other';
+
+// Achievements (from Achievement.ts / UserAchievement.ts)
+export type AchievementCategory = 'story' | 'social' | 'special' | 'milestone';
+export type AchievementType = 'automatic' | 'conditional' | 'hidden';
+export type AchievementRarity = 'common' | 'rare' | 'epic' | 'legendary';
+
+export interface UserAchievement {
+  id: ObjectId;
+  achievementId: string;
+  unlockedAt: ISODateString;
+  unlockSource: {
+    type: 'story_completion' | 'automatic' | 'event' | 'admin_grant';
+    sourceId?: string;
+    sourceName?: string;
+    details?: string;
+  };
+  category: AchievementCategory;
+  rarity: AchievementRarity;
+  pointsAwarded: number;
+  title: string;
+  description: string;
+  icon: string;
+}
+
+// Credits (from User.gameStats + CreditTransaction.ts) (derived DTO)
+export interface CreditBalance {
+  credits: number;
+  maxCredits: number;
+  lastCreditRefill: ISODateString;
+  refillIntervalMs: number;
+}
+
+export type CreditTransactionSource =
+  | 'choice'
+  | 'review'
+  | 'achievement'
+  | 'refill'
+  | 'purchase';
+```
+
+## 6. Endpoints
+
+### 6.1 Authentication
+
+#### POST `/api/auth/login`
+
+**Auth**: none
+
+**Request Body**
+```ts
+export interface AuthLoginRequest {
+  email: string;
+  password: string;
 }
 ```
 
-### POST /api/auth/signup
-- Used by: `pages/Signup.tsx` (step REGISTER).
-- Request:
-```json
-{ "name": "Traveler", "email": "user@example.com", "password": "StrongP@ssw0rd" }
-```
-- Response 200:
-```json
-{ "userId": "u-temp", "otpExpiresAt": 1735707660000, "resendCooldownSeconds": 60 }
+**Response 200**
+```ts
+export type AuthLoginResponse = ApiResponse<AuthSession>;
 ```
 
-### POST /api/auth/signup/verify-otp
-- Used by: `pages/Signup.tsx` (step OTP).
-- Request:
-```json
-{ "email": "user@example.com", "otp": "123456" }
-```
-- Response 200: same shape as `/api/auth/login`.
+**Errors**
+- `VALIDATION_ERROR`, `INVALID_CREDENTIALS`, `ACCOUNT_DISABLED`, `ACCOUNT_NOT_VERIFIED`
 
-### POST /api/auth/signup/resend-otp
-- Used by: `pages/Signup.tsx` (Resend OTP button).
-- Request:
-```json
-{ "email": "user@example.com" }
-```
-- Response 200: `{ "otpExpiresAt": 1735707660000, "resendCooldownSeconds": 60 }`
+---
 
-### POST /api/auth/password/forgot
-- Used by: `pages/ForgotPassword.tsx` (step EMAIL).
-- Request: `{ "email": "user@example.com" }`
-- Response 200: `{ "otpExpiresAt": 1735707660000, "resendCooldownSeconds": 60 }`
+#### POST `/api/auth/login/google`
 
-### POST /api/auth/password/verify-otp
-- Used by: `pages/ForgotPassword.tsx` (step OTP).
-- Request: `{ "email": "user@example.com", "otp": "123456" }`
-- Response 200: `{ "resetToken": "temporary-reset-token", "expiresAt": 1735707960000 }`
+**Auth**: none
 
-### POST /api/auth/password/reset
-- Used by: `pages/ForgotPassword.tsx` (step NEW_PASSWORD).
-- Request:
-```json
-{ "resetToken": "temporary-reset-token", "newPassword": "NewP@ss123" }
-```
-- Response 200: `{ "message": "password reset", "token": "jwt", "user": { ...same as login... } }`
-
-## User Profile & Credits
-
-### GET /api/users/me
-- Used by: app bootstrap (`App.tsx`), `pages/Profile.tsx`, credit HUD in `pages/Player.tsx`.
-- Response 200: user object (same shape as login).
-
-### PATCH /api/users/me
-- Used by: `components/EditProfileModal.tsx` (general tab).
-- Request:
-```json
-{ "profile": { "displayName": "ใหม่ชื่อ", "avatar": { "type": "custom", "value": "https://example.com/avatar.jpg" } } }
-```
-- Response 200: updated user object.
-
-### POST /api/users/me/password
-- Used by: `components/EditProfileModal.tsx` (security tab).
-- Request:
-```json
-{ "currentPassword": "old", "newPassword": "new-strong-pass" }
-```
-- Response 200: `{ "message": "updated" }`
-
-### GET /api/users/me/history?limit=5&page=1
-- Used by: `pages/Profile.tsx` (History tab pagination).
-- Response 200:
-```json
-{
-  "items": [
-    {
-      "storyId": "1",
-      "storyTitle": "โปรโตคอลนีออน",
-      "coverImageUrl": "https://…",
-      "genre": "ไซไฟ",
-      "estimatedDuration": "45 นาที",
-      "endingId": "e1",
-      "endingTitle": "การหลบหนีที่สมบูรณ์แบบ",
-      "endingType": "good",
-      "playedAt": "2024-12-30T10:00:00Z"
-    }
-  ],
-  "page": 1,
-  "pageSize": 5,
-  "total": 12
+**Request Body**
+```ts
+export interface AuthGoogleLoginRequest {
+  idToken: string;
 }
 ```
 
-### GET /api/users/me/achievements
-- Used by: `pages/Profile.tsx` (Achievements tab), gating choices in `pages/Player.tsx`.
-- Response 200:
-```json
-{
-  "achievements": [
-    { "achievementId": "first_step", "title": "ก้าวแรกสู่สังเวียน", "description": "เล่นจบ 1 เรื่อง", "icon": "🦶", "rewards": { "creditBonus": 2 }, "unlocked": true, "unlockedAt": "2024-12-30T10:00:00Z" }
-  ],
-  "unlockedIds": ["first_step", "critic"]
+**Response 200**
+```ts
+export type AuthGoogleLoginResponse = ApiResponse<AuthSession>;
+```
+
+**Errors**
+- `VALIDATION_ERROR`, `INVALID_CREDENTIALS`, `ACCOUNT_DISABLED`
+
+---
+
+#### POST `/api/auth/guest`
+
+**Auth**: none
+
+**Request Body**
+```ts
+export interface AuthGuestRequest {
+  locale?: string; // e.g. "th-TH"
 }
 ```
 
-### POST /api/users/me/favorites
-- Used by: `pages/StoryDetail.tsx` (toggle heart), `pages/Library.tsx` (favorites view).
-- Request: `{ "storyId": "1", "action": "add" }` (`action: "remove"` to delete).
-- Response 200: `{ "favorites": ["66ff…storyId1", "66ff…storyId3"] }`
+**Response 200**
+```ts
+export type AuthGuestResponse = ApiResponse<AuthSession>;
+```
 
-### GET /api/users/me/credits
-- Used by: HUD in `pages/Player.tsx` and refill timer in `App.tsx`.
-- Response 200:
-```json
-{
-  "credits": 18,
-  "maxCredits": 25,
-  "lastCreditRefill": "2024-12-30T10:00:00Z",
-  "refillIntervalMs": 300000
+---
+
+#### POST `/api/auth/signup`
+
+Creates a registration OTP (`OtpCode.type = "registration"`). User is created only after OTP verification.
+
+**Auth**: none
+
+**Request Body**
+```ts
+export interface AuthSignupRequest {
+  email: string;
+  password: string;
+  username: string;
+  displayName: string;
 }
 ```
 
-### POST /api/users/me/credits/deduct
-- Used by: `pages/Player.tsx` on each choice.
-- Request: `{ "storyId": "1", "sessionId": "sess-123", "reason": "choice" }`
-- Response 200:
-```json
-{ "credits": 17, "maxCredits": 25, "lastCreditRefill": "2024-12-30T10:05:00Z", "allowed": true }
+**Response 200**
+```ts
+export interface AuthOtpIssued {
+  email: string;
+  otpExpiresAt: ISODateString;
+  resendCooldownSeconds: number;
+}
+
+export type AuthSignupResponse = ApiResponse<AuthOtpIssued>;
 ```
-- Error 402: `{ "allowed": false, "credits": 0, "nextRefillAt": "2024-12-30T10:10:00Z" }`
 
-## Stories & Discovery
+**Errors**
+- `VALIDATION_ERROR`, `CONFLICT`, `RATE_LIMIT_EXCEEDED`
 
-### GET /api/stories?search=&genre=&onlyFavorites=false&limit=20&page=1
-- Used by: `pages/Home.tsx` (featured slice), `pages/Library.tsx`.
-- Response 200:
-```json
-{
-  "items": [
-    {
-      "_id": "66ff…",
-      "title": "โปรโตคอลนีออน (The Neon Protocol)",
-      "description": "…",
-      "metadata": {
-        "genre": "ไซไฟ",
-        "tags": ["ไซเบอร์พังค์", "แฮ็กเกอร์", "แอคชั่น"],
-        "isComingSoon": false,
-        "launchDate": "2024-12-25T00:00:00Z"
-      },
-      "media": {
-        "coverImageUrl": "https://…",
-        "headerImageUrl": "https://…",
-        "trailerUrl": "https://www.youtube.com/watch?v=DyX-Q5180Cs"
-      },
-      "gallery": { "imageIds": ["gal1", "gal2"], "totalImages": 2, "featuredImageId": "gal1" },
-      "stats": {
-        "averageRating": 4.8,
-        "totalRatings": 1200,
-        "totalPlayers": 12540,
-        "estimatedDuration": "45 นาที",
-        "totalEndings": 6
-      }
-    }
-  ],
-  "page": 1,
-  "pageSize": 20,
-  "total": 42
+---
+
+#### POST `/api/auth/signup/verify-otp`
+
+Verifies registration OTP and returns a logged-in session.
+
+**Auth**: none
+
+**Request Body**
+```ts
+export interface AuthVerifyOtpRequest {
+  email: string;
+  otp: string; // 6 digits
 }
 ```
 
-### GET /api/stories/:id
-- Used by: `pages/StoryDetail.tsx`, `pages/Player.tsx` (cover metadata), `pages/Profile.tsx` history cards.
-- Response 200:
-```json
-{
-  "_id": "66ff…",
-  "title": "โปรโตคอลนีออน (The Neon Protocol)",
-  "description": "…",
-  "metadata": {
-    "genre": "ไซไฟ",
-    "tags": ["ไซเบอร์พังค์", "แฮ็กเกอร์", "แอคชั่น"],
-    "isComingSoon": false,
-    "launchDate": null
-  },
-  "media": {
-    "coverImageUrl": "https://…",
-    "headerImageUrl": "https://…",
-    "trailerUrl": "https://www.youtube.com/watch?v=DyX-Q5180Cs"
-  },
-  "gallery": { "imageIds": ["gal1"], "totalImages": 1, "featuredImageId": "gal1" },
-  "stats": {
-    "averageRating": 4.8,
-    "totalRatings": 1200,
-    "totalPlayers": 12540,
-    "estimatedDuration": "45 นาที",
-    "totalEndings": 6
-  },
-  "content": { "startingNodeId": "start" },
-  "moderation": { "status": "approved", "reportCount": 0 },
-  "isFavorite": true,
-  "userProgress": {
-    "endingsUnlocked": ["e1", "e2"],
-    "lastPlayedAt": "2024-12-30T10:00:00Z"
-  }
+**Response 200**
+```ts
+export type AuthVerifyOtpResponse = ApiResponse<AuthSession>;
+```
+
+**Errors**
+- `VALIDATION_ERROR`, `BAD_REQUEST`, `RATE_LIMIT_EXCEEDED`
+
+---
+
+#### POST `/api/auth/signup/resend-otp`
+
+**Auth**: none
+
+**Request Body**
+```ts
+export interface AuthResendOtpRequest {
+  email: string;
 }
 ```
 
-### GET /api/stories/:id/endings
-- Used by: `pages/StoryDetail.tsx` (Endings panel).
-- Response 200:
-```json
-{
-  "endings": [
-    { "nodeId": "e1", "title": "การหลบหนีที่สมบูรณ์แบบ", "type": "good", "unlocked": true },
-    { "nodeId": "e2", "title": "ถูกจับกุม", "type": "bad", "unlocked": true },
-    { "nodeId": "e3", "title": "พันธมิตรใหม่", "type": "neutral", "unlocked": false }
-  ],
-  "unlockedCount": 2,
-  "total": 5
+**Response 200**
+```ts
+export type AuthResendOtpResponse = ApiResponse<AuthOtpIssued>;
+```
+
+**Errors**
+- `VALIDATION_ERROR`, `RATE_LIMIT_EXCEEDED`
+
+---
+
+#### POST `/api/auth/password/forgot`
+
+Creates a password reset OTP (`OtpCode.type = "password_reset"`).
+
+**Auth**: none
+
+**Request Body**
+```ts
+export interface AuthForgotPasswordRequest {
+  email: string;
 }
 ```
 
-### GET /api/stories/:id/graph
-- Used by: `pages/Player.tsx` (initial load of StoryNode graph).
-- Response 200:
-```json
-{
-  "startNodeId": "start",
-  "nodes": {
-    "start": {
-      "nodeId": "start",
-      "segments": [
-        { "type": "text", "text": "คุณตื่นขึ้นมา…", "duration": 4000 },
-        { "type": "image", "url": "https://…/scene1.jpg" }
-      ],
-      "media": { "bgMusicUrl": "https://…/industrial_hum.ogg", "backgroundImageUrl": "https://…/scene1.jpg" },
-      "choices": [
-        { "id": "c1", "text": "ค้นหาในห้อง", "nextNodeId": "search", "requirements": { "achievementId": null }, "costs": { "credits": 1 } },
-        { "id": "c2", "text": "ลองเปิดประตู", "nextNodeId": "door" }
-      ],
-      "isEnding": false
-    }
-  }
+**Response 200**
+```ts
+export type AuthForgotPasswordResponse = ApiResponse<AuthOtpIssued>;
+```
+
+---
+
+#### POST `/api/auth/password/verify-otp`
+
+Verifies password reset OTP and issues a short-lived reset token.
+
+**Auth**: none
+
+**Request Body**
+```ts
+export interface AuthVerifyPasswordOtpRequest {
+  email: string;
+  otp: string; // 6 digits
 }
 ```
 
-### POST /api/stories/:id/session
-- Used by: `pages/Player.tsx` when pressing "เริ่มเล่น" in `pages/StoryDetail.tsx`.
-- Request:
-```json
-{ "storyId": "1" }
-```
-- Response 200:
-```json
-{
-  "sessionId": "sess-123",
-  "credits": { "credits": 20, "maxCredits": 25, "lastCreditRefill": "2024-12-30T10:00:00Z" },
-  "startNodeId": "start"
+**Response 200**
+```ts
+export interface PasswordResetToken {
+  resetToken: string;
+  expiresAt: ISODateString;
 }
-```
-- Error 403 when story is `comingSoon`.
 
-### POST /api/stories/:id/session/:sessionId/choice
-- Used by: `pages/Player.tsx` per choice selection.
-- Request:
-```json
-{ "choiceId": "c1", "currentNodeId": "start" }
+export type AuthVerifyPasswordOtpResponse = ApiResponse<PasswordResetToken>;
 ```
-- Response 200:
-```json
-{
-  "nextNodeId": "search",
-  "credits": { "credits": 19, "maxCredits": 25, "lastCreditRefill": "2024-12-30T10:05:00Z" },
-  "history": [
-    { "type": "narrative", "nodeId": "start", "text": "คุณตื่นขึ้นมา…" },
-    { "type": "choice", "text": "ค้นหาในห้อง" }
-  ],
-  "unlockedAchievements": [],
-  "unlockedAvatars": []
-}
-```
-- Error 402 if credits insufficient (same shape as `/credits/deduct` error).
 
-### POST /api/stories/:id/session/:sessionId/complete
-- Used by: `pages/Player.tsx` when reaching an ending.
-- Request:
-```json
-{ "endingId": "e1", "history": [{ "nodeId": "start", "choiceId": "c1" }] }
-```
-- Response 200:
-```json
-{
-  "endingId": "e1",
-  "rewards": {
-    "creditsAwarded": 0,
-    "achievementsUnlocked": ["completionist"],
-    "avatarsUnlocked": ["cyber_1"]
-  },
-  "userProgress": { "endingsUnlocked": ["e1", "e2"], "endingsCount": 2, "totalEndings": 6 },
-  "nextSuggestedStories": ["2", "3"]
+---
+
+#### POST `/api/auth/password/reset`
+
+Resets password and returns a new logged-in session.
+
+**Auth**: none
+
+**Request Body**
+```ts
+export interface AuthPasswordResetRequest {
+  resetToken: string;
+  newPassword: string;
 }
 ```
 
-## Reviews, Ratings, Reporting
+**Response 200**
+```ts
+export type AuthPasswordResetResponse = ApiResponse<AuthSession>;
+```
 
-### GET /api/stories/:id/reviews?limit=10&offset=0
-- Used by: `pages/StoryDetail.tsx` (reviews list).
-- Response 200:
-```json
-{
-  "items": [
-    {
-      "_id": "r1",
-      "userId": "66ff…",
-      "rating": 5,
-      "reviewText": "งานภาพใน Neon Protocol สวยตะลึงมาก!",
-      "isSpoiler": false,
-      "upVotes": 10,
-      "downVotes": 0,
-      "adminReply": { "text": "ขอบคุณมากครับ", "adminId": "66aa…", "repliedAt": "2023-10-16T00:00:00Z" },
-      "createdAt": "2023-10-15T00:00:00Z"
-    }
-  ],
-  "summary": { "average": 4.8, "total": 1200, "distribution": { "5": 900, "4": 200, "3": 80, "2": 15, "1": 5 } }
+**Errors**
+- `VALIDATION_ERROR`, `BAD_REQUEST`
+
+---
+
+#### POST `/api/auth/refresh`
+
+**Auth**: none
+
+**Request Body**
+```ts
+export interface AuthRefreshRequest {
+  refreshToken: string;
 }
 ```
 
-### POST /api/stories/:id/reviews
-- Used by: `pages/StoryDetail.tsx` and `pages/Player.tsx` (RatingModal submission).
-- Request:
-```json
-{ "rating": 5, "reviewText": "ชอบมาก", "isSpoiler": false }
+**Response 200**
+```ts
+export type AuthRefreshResponse = ApiResponse<{
+  tokens: AuthTokens;
+}>;
 ```
-- Response 200:
-```json
-{
-  "reviewId": "r-new",
-  "bonus": { "creditsAwarded": 5, "achievementUnlocked": "critic" },
-  "summary": { "average": 4.81, "total": 1201 },
-  "user": { "gameStats": { "credits": 25, "maxCredits": 25 }, "ratedStoriesForBonus": ["1"] }
+
+**Errors**
+- `VALIDATION_ERROR`, `TOKEN_INVALID`, `TOKEN_EXPIRED`
+
+### 6.2 User
+
+#### GET `/api/users/me`
+
+**Auth**: user access token
+
+**Response 200**
+```ts
+export type GetMeResponse = ApiResponse<UserPublic>;
+```
+
+**Errors**
+- `UNAUTHORIZED`, `TOKEN_INVALID`, `TOKEN_EXPIRED`
+
+---
+
+#### PATCH `/api/users/me`
+
+**Auth**: user access token
+
+**Request Body**
+```ts
+export interface UpdateMeRequest {
+  profile?: Partial<Pick<UserProfile, 'displayName' | 'avatar' | 'bio'>>;
 }
 ```
 
-### POST /api/stories/:id/report
-- Used by: `pages/StoryDetail.tsx` (Report story button).
-- Request:
-```json
-{ "reason": "content_issue", "description": "ฉากบางส่วนมีภาพรุนแรง" }
+**Response 200**
+```ts
+export type UpdateMeResponse = ApiResponse<UserPublic>;
 ```
-- Response 200: `{ "status": "received", "ticketId": "rep-123" }`
 
-### POST /api/reviews/:reviewId/report
-- Used by: `pages/StoryDetail.tsx` (Report review button).
-- Request:
-```json
-{ "reason": "abuse", "description": "ภาษาหยาบคาย" }
-```
-- Response 200: `{ "status": "received", "ticketId": "rev-456" }`
+---
 
-## Oracle (AI Recommendation)
+#### POST `/api/users/me/password`
 
-### POST /api/oracle/recommendation
-- Used by: `pages/Oracle.tsx` (calls `services/geminiService.ts`).
-- Request:
-```json
-{ "mood": "อยากได้แนวไซไฟเข้มข้น", "storyIds": ["1", "2", "3", "4", "5", "6"] }
-```
-- Response 200:
-```json
-{
-  "message": "เทพพยากรณ์แนะนำ 'โปรโตคอลนีออน' ให้คุณ",
-  "suggestedStoryId": "1"
+**Auth**: user access token
+
+**Request Body**
+```ts
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }
 ```
-- Error fallback when API key missing: `{ "message": "เทพพยากรณ์เงียบงันในขณะนี้ (ไม่พบ API Key)" }`
 
-## Support & Misc
-
-### GET /api/reviews/highlight?limit=12
-- Used by: `pages/Home.tsx` (review slider).
-- Response 200 (lightweight cards):
-```json
-[
-  {
-    "_id": "r1",
-    "userId": "66ff…",
-    "userDisplayName": "เอกชัย เกมเมอร์",
-    "userAvatar": { "type": "custom", "value": "https://…/avatar.jpg" },
-    "rating": 5,
-    "reviewText": "งานภาพใน Neon Protocol สวยตะลึงมาก!",
-    "createdAt": "2023-10-15T00:00:00Z",
-    "adminReply": {
-      "text": "ขอบคุณมากครับ",
-      "adminId": "66aa…",
-      "adminDisplayName": "Chronos Team",
-      "adminAvatar": { "type": "custom", "value": "https://…/admin-avatar.png" },
-      "repliedAt": "2023-10-16T00:00:00Z"
-    }
-  }
-]
+**Response 200**
+```ts
+export type ChangePasswordResponse = ApiResponse<{ message: string }>;
 ```
 
-### GET /api/config/app
-- Used by: `App.tsx` (show app name/version, credit refill interval).
-- Response 200:
-```json
-{ "appName": "CHRONOS", "appVersion": "v1.2.0", "refillIntervalMs": 300000 }
+---
+
+#### GET `/api/users/me/history`
+
+**Auth**: user access token
+
+**Query**
+```ts
+export interface UserHistoryQuery {
+  page?: number;
+  limit?: number;
+}
+```
+
+**Response 200** (derived from `UserStoryProgress` + `Story`)
+```ts
+export interface UserHistoryItem {
+  storyId: ObjectId;
+  storyTitle: string;
+  coverImageUrl?: string;
+  genre: string;
+  estimatedDuration?: string;
+  endingId?: string;
+  endingTitle?: string;
+  endingType?: StoryEndingType;
+  playedAt: ISODateString;
+}
+
+export type UserHistoryResponse = ApiPaginatedResponse<UserHistoryItem>;
+```
+
+---
+
+#### GET `/api/users/me/achievements`
+
+**Auth**: user access token
+
+**Response 200**
+```ts
+export type UserAchievementsResponse = ApiResponse<{
+  items: UserAchievement[];
+  unlockedIds: string[];
+}>;
+```
+
+---
+
+#### POST `/api/users/me/favorites`
+
+**Auth**: user access token
+
+**Request Body**
+```ts
+export interface UpdateFavoriteRequest {
+  storyId: ObjectId;
+  action: 'add' | 'remove';
+}
+```
+
+**Response 200**
+```ts
+export type UpdateFavoriteResponse = ApiResponse<{
+  favorites: ObjectId[];
+}>;
+```
+
+---
+
+#### GET `/api/users/me/credits`
+
+**Auth**: user access token
+
+**Response 200**
+```ts
+export type GetCreditsResponse = ApiResponse<CreditBalance>;
+```
+
+---
+
+#### POST `/api/users/me/credits/deduct`
+
+**Auth**: user access token
+
+**Request Body**
+```ts
+export interface DeductCreditsRequest {
+  storyId: ObjectId;
+  sessionId?: string;
+  source: CreditTransactionSource;
+}
+```
+
+**Response 200**
+```ts
+export type DeductCreditsResponse = ApiResponse<CreditBalance & { allowed: true }>;
+```
+
+**Errors**
+- `BAD_REQUEST` (e.g. insufficient credits), `UNAUTHORIZED`, `TOKEN_INVALID`, `TOKEN_EXPIRED`
+
+### 6.3 Stories
+
+#### GET `/api/stories`
+
+**Auth**: optional (adds user-context fields when authenticated)
+
+**Query**
+```ts
+export interface ListStoriesQuery {
+  search?: string;
+  genre?: string; // Genre.slug
+  onlyFavorites?: boolean;
+  page?: number;
+  limit?: number;
+}
+```
+
+**Response 200**
+```ts
+export type ListStoriesResponse = ApiPaginatedResponse<StoryPublic & { isFavorite?: boolean }>;
+```
+
+---
+
+#### GET `/api/stories/:id`
+
+**Auth**: optional (adds user-context fields when authenticated)
+
+**Response 200**
+```ts
+export type GetStoryResponse = ApiResponse<StoryDetail>;
+```
+
+**Errors**
+- `NOT_FOUND`
+
+---
+
+#### GET `/api/stories/:id/endings`
+
+**Auth**: optional (adds `unlocked` when authenticated)
+
+**Response 200** (derived from `StoryNode.getStoryEndings`)
+```ts
+export interface StoryEndingSummary {
+  nodeId: string;
+  title?: string;
+  type?: StoryEndingType;
+  isSecret?: boolean;
+  isRare?: boolean;
+  unlocked?: boolean;
+}
+
+export type GetStoryEndingsResponse = ApiResponse<{
+  endings: StoryEndingSummary[];
+  total: number;
+  unlockedCount?: number;
+}>;
+```
+
+---
+
+#### GET `/api/stories/:id/graph`
+
+**Auth**: user access token
+
+**Response 200**
+```ts
+export type GetStoryGraphResponse = ApiResponse<{
+  startNodeId: string;
+  nodes: Record<string, StoryNodePublic>;
+}>;
+```
+
+---
+
+#### POST `/api/stories/:id/session`
+
+Creates or resumes a playthrough (`UserStoryProgress.playthroughId`).
+
+**Auth**: user access token
+
+**Request Body**
+```ts
+export interface StartStorySessionRequest {
+  playthroughType?: 'normal' | 'speedrun' | 'completionist';
+}
+```
+
+**Response 200**
+```ts
+export interface StorySessionState {
+  storyId: ObjectId;
+  sessionId: string; // maps to UserStoryProgress.playthroughId
+  currentNodeId: string;
+  hasCompleted: boolean;
+  lastPlayedAt: ISODateString;
+  choicesMade: number;
+  nodesVisited: number;
+}
+
+export type StartStorySessionResponse = ApiResponse<StorySessionState>;
+```
+
+---
+
+#### POST `/api/stories/:id/session/:sessionId/choice`
+
+**Auth**: user access token
+
+**Request Body**
+```ts
+export interface MakeChoiceRequest {
+  nodeId: string;
+  choiceId: string;
+  choiceText: string;
+  timeSpentMs?: number;
+}
+```
+
+**Response 200**
+```ts
+export type MakeChoiceResponse = ApiResponse<StorySessionState & {
+  nextNodeId: string;
+}>;
+```
+
+---
+
+#### POST `/api/stories/:id/session/:sessionId/complete`
+
+**Auth**: user access token
+
+**Request Body**
+```ts
+export interface CompleteStoryRequest {
+  endingId: string;
+  history?: Array<{ nodeId: string; choiceId: string }>;
+  isRare?: boolean;
+}
+```
+
+**Response 200**
+```ts
+export type CompleteStoryResponse = ApiResponse<{
+  endingId: string;
+  rewards: {
+    creditsAwarded: number;
+    achievementsUnlocked: string[];
+    avatarsUnlocked: string[];
+  };
+  userProgress: {
+    endingsUnlocked: string[];
+    endingsCount: number;
+    totalEndings: number;
+  };
+  nextSuggestedStories: ObjectId[];
+}>;
+```
+
+### 6.4 Reviews & Reporting
+
+#### GET `/api/stories/:id/reviews`
+
+**Auth**: optional
+
+**Query**
+```ts
+export interface ListStoryReviewsQuery {
+  page?: number;
+  limit?: number;
+}
+```
+
+**Response 200**
+```ts
+export type ListStoryReviewsResponse = ApiResponse<{
+  items: ReviewPublic[];
+  meta: ApiPaginationMeta;
+  summary: ReviewSummary;
+}>;
+```
+
+---
+
+#### POST `/api/stories/:id/reviews`
+
+**Auth**: user access token
+
+**Request Body**
+```ts
+export interface CreateReviewRequest {
+  rating: ReviewRating;
+  reviewText: string;
+  isSpoiler?: boolean;
+}
+```
+
+**Response 200**
+```ts
+export type CreateReviewResponse = ApiResponse<{
+  reviewId: ObjectId;
+  bonus?: { creditsAwarded?: number; achievementUnlocked?: string };
+  summary: Pick<ReviewSummary, 'average' | 'total'>;
+  user: { gameStats: Pick<UserGameStats, 'credits' | 'maxCredits'> };
+}>;
+```
+
+---
+
+#### POST `/api/stories/:id/report`
+
+Creates a story flag (`StoryFlag`).
+
+**Auth**: user access token
+
+**Request Body**
+```ts
+export interface ReportStoryRequest {
+  reason: StoryFlagReason;
+  detail?: string;
+}
+```
+
+**Response 200**
+```ts
+export type ReportStoryResponse = ApiResponse<{
+  reportId: ObjectId;
+  status: 'pending';
+}>;
+```
+
+---
+
+#### POST `/api/reviews/:reviewId/report`
+
+Creates a review flag (`ReviewFlag`).
+
+**Auth**: user access token
+
+**Request Body**
+```ts
+export interface ReportReviewRequest {
+  reason: ReviewFlagReason;
+  detail?: string;
+}
+```
+
+**Response 200**
+```ts
+export type ReportReviewResponse = ApiResponse<{
+  reportId: ObjectId;
+  status: 'pending';
+}>;
+```
+
+---
+
+#### GET `/api/reviews/highlight`
+
+**Auth**: optional
+
+**Query**
+```ts
+export interface HighlightReviewsQuery {
+  limit?: number; // default: 12
+}
+```
+
+**Response 200** (derived lightweight cards)
+```ts
+export interface HighlightReviewCard {
+  id: ObjectId;
+  userId: ObjectId;
+  userDisplayName: string;
+  userAvatar: { type: UserAvatarType; value: string };
+  rating: ReviewRating;
+  reviewText: string;
+  createdAt: ISODateString;
+  adminReply?: {
+    text?: string;
+    adminId?: ObjectId;
+    adminDisplayName?: string;
+    adminAvatar?: { type: UserAvatarType; value: string };
+    repliedAt?: ISODateString;
+  };
+}
+
+export type HighlightReviewsResponse = ApiResponse<HighlightReviewCard[]>;
+```
+
+### 6.5 Oracle
+
+#### POST `/api/oracle/recommendation`
+
+**Auth**: optional
+
+**Request Body**
+```ts
+export interface OracleRecommendationRequest {
+  mood: string;
+  storyIds: ObjectId[];
+}
+```
+
+**Response 200**
+```ts
+export type OracleRecommendationResponse = ApiResponse<{
+  message: string;
+  suggestedStoryId?: ObjectId;
+}>;
+```
+
+### 6.6 App Config
+
+#### GET `/api/config/app`
+
+Returns public configuration entries (`SystemConfig.isPublic = true`).
+
+**Auth**: none
+
+**Response 200**
+```ts
+export type PublicConfigCategory = 'game' | 'security' | 'payment' | 'feature' | 'ui';
+
+export type PublicConfigEntry = {
+  key: string;
+  value: unknown;
+  description: string;
+  category: PublicConfigCategory;
+};
+
+export type GetAppConfigResponse = ApiResponse<{
+  configs: PublicConfigEntry[];
+}>;
+```
+
+### 6.7 Health
+
+#### GET `/api/health`
+
+**Auth**: none
+
+**Response 200/503** (raw payload, no envelope)
+```ts
+export interface HealthResponse {
+  status: 'healthy' | 'unhealthy';
+  timestamp?: ISODateString;
+  uptime?: number;
+  database: {
+    status: 'connected' | 'disconnected' | 'error';
+    error?: string;
+  };
+}
 ```

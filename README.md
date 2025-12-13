@@ -17,9 +17,9 @@ TalePick is an interactive story platform where users play branching narratives 
 
 This is a monorepo managed with npm workspaces containing:
 
-- **apps/frontend** - Main user application (port 3000)
-- **apps/admin** - Admin dashboard application (port 3001)
-- **packages/backend** - All business logic, database models, and API layer
+- **apps/frontend** - Main user application (port 3000) with API routes at `/api/*`
+- **apps/admin** - Admin dashboard application (port 3001) with API routes at `/api/*`
+- **packages/backend** - All business logic, database models, and use cases (Clean Architecture)
 - **packages/shared** - TypeScript types, constants, and utilities
 - **packages/testing** - Test utilities, mocks, and factories
 
@@ -161,7 +161,11 @@ npm run db:reset           # Reset database (cleanup + init)
   - Testing framework setup (Vitest)
 
 ### 🚧 Current Development
-- **Milestone 1.2: API Foundation** - Next milestone
+- **Milestone 1.2: API Foundation** - In progress
+  - ✅ Comprehensive API documentation completed
+  - 🔄 API routes structure implementation
+  - 🔄 Backend package integration
+  - 🔄 Environment configuration
 
 ## 🛠️ Tech Stack
 
@@ -176,6 +180,11 @@ npm run db:reset           # Reset database (cleanup + init)
 - **Mongoose** - ODM for MongoDB
 - **Clean Architecture** - Separated concerns architecture
 - **Dependency Injection** - tsyringe container
+
+### Deployment Architecture
+- **Frontend**: `https://www.talepick.com` → API at `/api/*`
+- **Admin**: `https://admin.talepick.com` → API at `/api/*`
+- **Development**: `http://localhost:3000` (frontend), `http://localhost:3001` (admin)
 
 ### Development Tools
 - **npm Workspaces** - Monorepo management
@@ -194,3 +203,6 @@ npm run db:reset           # Reset database (cleanup + init)
 - **[Database Schema](docs/database/)** - Complete database documentation
 - **[Architecture Guide](FOLDER_STRUCTURE.md)** - Clean architecture overview
 - **[Project Instructions](CLAUDE.md)** - Development guidelines and patterns
+- **[API Documentation](docs/api/)** - Complete API specifications
+  - [Frontend API](docs/api/frontend/README.md) - User-facing API endpoints
+  - [Admin API](docs/api/backend/README.md) - Admin dashboard API endpoints
