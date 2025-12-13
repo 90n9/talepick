@@ -5,6 +5,7 @@
  * Run with: npm run db:fix-indexes
  */
 
+import mongoose from 'mongoose';
 import connectDB from '../packages/backend/src/infrastructure/database/connection.js';
 import { User, Genre, Achievement } from '../packages/backend/src/infrastructure/models/index.js';
 
@@ -58,9 +59,20 @@ async function fixIndexes() {
     console.log('\n🎉 Database indexes fix completed successfully!');
     console.log('✅ All missing indexes have been created.');
 
+    try {
+      await mongoose.disconnect();
+      console.log('🔌 Disconnected from MongoDB.');
+    } catch (disconnectError) {
+      console.error('⚠️  Warning: Failed to disconnect from MongoDB:', disconnectError);
+    }
     process.exit(0);
   } catch (error) {
     console.error('❌ Index fix failed:', error);
+    try {
+      await mongoose.disconnect();
+    } catch (disconnectError) {
+      console.error('⚠️  Warning: Failed to disconnect from MongoDB:', disconnectError);
+    }
     process.exit(1);
   }
 }
