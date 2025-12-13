@@ -104,9 +104,11 @@ Initialize the database with seed data:
 
 ```bash
 npm run seed                    # Seed all data (genres, avatars, achievements)
-npm run seed:genres            # Seed only genres
-npm run seed:avatars           # Seed only avatars
-npm run seed:achievements      # Seed only achievements
+npm run seed:genres             # Seed only genres
+npm run seed:avatars            # Seed only avatars
+npm run seed:achievements       # Seed only achievements
+
+Seed commands use dedicated TypeScript entrypoints in `scripts/seed-*.ts` to avoid inline `tsx -e` module resolution issues.
 ```
 
 ### Full Development Setup

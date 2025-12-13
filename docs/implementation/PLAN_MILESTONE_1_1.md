@@ -788,9 +788,9 @@ export { runSeeds, seedGenres, seedAvatars, seedAchievements };
 {
   "scripts": {
     "seed": "tsx packages/backend/src/infrastructure/seeds/index.ts",
-    "seed:genres": "tsx -e \"import { seedGenres } from './packages/backend/src/infrastructure/seeds'; seedGenres();\"",
-    "seed:avatars": "tsx -e \"import { seedAvatars } from './packages/backend/src/infrastructure/seeds'; seedAvatars();\"",
-    "seed:achievements": "tsx -e \"import { seedAchievements } from './packages/backend/src/infrastructure/seeds'; seedAchievements();\""
+    "seed:genres": "tsx scripts/seed-genres.ts",
+    "seed:avatars": "tsx scripts/seed-avatars.ts",
+    "seed:achievements": "tsx scripts/seed-achievements.ts"
   }
 }
 ```
