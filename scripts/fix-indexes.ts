@@ -64,7 +64,11 @@ async function fixIndexes() {
     process.exit(0);
   } catch (error) {
     console.error('❌ Index fix failed:', error);
-    await mongoose.disconnect();
+    try {
+      await mongoose.disconnect();
+    } catch (disconnectError) {
+      // Ignore disconnect errors during error handling
+    }
     process.exit(1);
   }
 }
